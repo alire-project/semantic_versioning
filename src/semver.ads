@@ -1,16 +1,20 @@
 private with Ada.Strings.Unbounded;
 
-package semver with Preelaborate is       
+package Semver with Preelaborate is       
+   
+   type Point is range 0 .. 999_999;
    
    type Version (<>) is private;
    
    --  A version is a major, minor and patch number
    --  Optionally it may include pre-release name and build metadata, e.g.:
-   --  1.2.0-alpha+c3423fab
+   --  1.2.0-alpha+c3423fab   
    
-   function New_Version (Major : Natural;
+   type Requisites (<>) is private;      
+   
+   function New_Version (Major : Point;
                          Minor, 
-                         Patch : Natural := 0;
+                         Patch : Point := 0;
                          Pre_Release,
                          Build : String := "") return Version;
    -- Refer to http://semver.org/ for the exact meaning of each part.
@@ -19,9 +23,7 @@ package semver with Preelaborate is
    function New_Version (Description : String) return Version;   
    function "+"         (Description : String) return Version renames New_Version;
    
-   function "<" (L, R : Version) return Boolean;
-         
-   type Requisites (<>) is private;   
+   function "<" (L, R : Version) return Boolean;         
    
    function At_Least (V : Version) return Requisites;
    function At_Most  (V : Version) return Requisites;
@@ -60,4 +62,4 @@ private
    
    function Less_Than (V : Version) return Requisites is (At_Most(V) and Except(V));
 
-end semver;
+end Semver;
