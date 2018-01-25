@@ -10,7 +10,11 @@ package Semver with Preelaborate is
    --  Optionally it may include pre-release name and build metadata, e.g.:
    --  1.2.0-alpha+c3423fab   
    
-   type Requisites (<>) is private;      
+   type Version_Set (<>) is private;      
+   
+   --  A collection of dependencies 
+   
+   None : constant Version_Set;
    
    function New_Version (Major : Point;
                          Minor, 
@@ -25,15 +29,15 @@ package Semver with Preelaborate is
    
    function "<" (L, R : Version) return Boolean;         
    
-   function At_Least (V : Version) return Requisites;
-   function At_Most  (V : Version) return Requisites;
-   function Less_Than (V : Version) return Requisites;
-   function Exactly  (V : Version) return Requisites;
-   function Except   (V : Version) return Requisites;
+   function At_Least (V : Version) return Version_Set;
+   function At_Most  (V : Version) return Version_Set;
+   function Less_Than (V : Version) return Version_Set;
+   function Exactly  (V : Version) return Version_Set;
+   function Except   (V : Version) return Version_Set;
    
-   function "and" (L, R : Requisites) return Requisites;
+   function "and" (L, R : Version_Set) return Version_Set;
    
-   function Satisfies (V : Version; R : Requisites) return Boolean;
+   function Is_In (V : Version; R : Version_Set) return Boolean;
    
 private
    
@@ -49,17 +53,17 @@ private
    
    type Conditions is (At_Least, At_Most, Exactly, Except);
    
-   type Requisite is record
-      Condition : Conditions;
-      Ver       : Version;
-   end record;
+   type Restriction is record
+      Condition  : Conditions;
+      On_Version : Version;
+   end record;     
    
-   function Satisfies (V : Version; R : Requisite) return Boolean;
+   type Version_Set is array (Positive range <>) of Restriction;      
    
-   type Requisites is array (Positive range <>) of Requisite;      
+   None : constant Version_Set := (1 .. 0 => <>);
    
-   function "and" (L, R : Requisites) return Requisites is (L & R);
+   function "and" (L, R : Version_Set) return Version_Set is (L & R);
    
-   function Less_Than (V : Version) return Requisites is (At_Most(V) and Except(V));
+   function Less_Than (V : Version) return Version_Set is (At_Most(V) and Except(V));
 
 end Semver;
