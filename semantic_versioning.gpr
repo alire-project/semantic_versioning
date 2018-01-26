@@ -1,4 +1,4 @@
-project Semver is
+project Semantic_Versioning is
 
    type Project_Modes is
       ("Library", "Executable");
@@ -12,7 +12,7 @@ project Semver is
          for Library_Dir use "lib";
 
       when "Executable" =>
-         for Main use ("semver.demo.adb");
+         for Main use ("semantic_versioning-demo.adb");
    end case;
 
    package Pretty_Printer is
@@ -35,5 +35,5 @@ project Semver is
       for Vcs_Kind use "Git";
    end Ide;
 
-end Semver;
+end Semantic_Versioning;
 
