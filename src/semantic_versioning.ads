@@ -39,6 +39,12 @@ package Semantic_Versioning with Preelaborate is
    -- A version with pre-release tag is earlier than its regular version.
    -- Build info is not taken into account to determine ordering.
    
+   function Major (V : Version) return Point;
+   function Minor (V : Version) return Point;
+   function Patch (V : Version) return Point;
+   function Pre_Release (V : Version) return String;
+   function Build (V : Version) return String;
+   
    function Image (V : Version) return Version_String;
    
    function Next_Patch (V : Version;
@@ -53,9 +59,12 @@ package Semantic_Versioning with Preelaborate is
                         Pre_Release, 
                         Build : String := "") return Version;
    
+   function At_Least_Within_Major (V : Version) return Version_Set;
+   
    function At_Least  (V : Version) return Version_Set;
    function At_Most   (V : Version) return Version_Set;
    function Less_Than (V : Version) return Version_Set;
+   function More_Than (V : Version) return Version_Set;
    function Exactly   (V : Version) return Version_Set;
    function Except    (V : Version) return Version_Set;
    
@@ -76,6 +85,12 @@ private
       Pre_Release,
       Build : UString := Ada.Strings.Unbounded.Null_Unbounded_String;
    end record;
+   
+   function Major (V : Version) return Point is (V.Major);
+   function Minor (V : Version) return Point is (V.Minor);
+   function Patch (V : Version) return Point is (V.Patch);
+   function Pre_Release (V : Version) return String is (UStrings.To_String (V.Pre_Release));
+   function Build (V : Version) return String is (UStrings.To_String (V.Build));
    
    function New_Version (Major : Point;
                          Minor, 
@@ -126,9 +141,13 @@ private
    
    type Version_Set is array (Positive range <>) of Restriction;      
    
+   function At_Least_Within_Major (V : Version) return Version_Set is
+      (At_Least (V) and Less_Than (Next_Major (V)));
+   
    function At_Least  (V : Version) return Version_Set is (1 => (At_Least, V));   
    function At_Most   (V : Version) return Version_Set is (1 => (At_Most, V));
    function Less_Than (V : Version) return Version_Set is (At_Most (V) and Except (V));   
+   function More_Than (V : Version) return Version_Set is (At_Least (V) and Except (V));
    function Exactly   (V : Version) return Version_Set is (1 => (Exactly, V));
    function Except    (V : Version) return Version_Set is (1 => (Except, V));
    
