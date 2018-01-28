@@ -21,10 +21,11 @@ project Semantic_Versioning is
 
    package Builder is
       for Switches ("ada") use ("-s", "-m", "-j0", "-g");
+      for Executable ("semantic_versioning-demo.adb") use "demo";
    end Builder;
 
    package Compiler is
-      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-Os", "-gnat12", "-gnato", "-fstack-check", "-gnata", "-gnatf");
+      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-p", "-O2", "-gnat12", "-gnato", "-fstack-check", "-gnata", "-gnatf");
    end Compiler;
 
    package Binder is
