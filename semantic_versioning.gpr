@@ -24,16 +24,24 @@ project Semantic_Versioning is
    end Builder;
 
    package Compiler is
-      for Switches ("ada") use ("-gnatVa", "-gnatwa.k.k.k.ea", "-g", "-O2", "-gnat12", "-gnato", "-fstack-check", "-gnata");
+      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-Os", "-gnat12", "-gnato", "-fstack-check", "-gnata", "-gnatf");
    end Compiler;
 
    package Binder is
-      for Switches ("ada") use ("-E", "-shared");
+      for Switches ("ada") use ("-Es");
    end Binder;
 
    package Ide is
       for Vcs_Kind use "Git";
    end Ide;
+
+   package Linker is
+      case Project_Mode is
+         when "Executable" =>
+            for Switches ("ada") use ("-g");
+         when "Library" => null;
+      end case;
+   end Linker;
 
 end Semantic_Versioning;
 

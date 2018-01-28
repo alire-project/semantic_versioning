@@ -1,8 +1,15 @@
+private with Ada.Strings;
+private with Ada.Strings.Fixed;
 private with Ada.Strings.Unbounded;
 
 package Semantic_Versioning with Preelaborate is       
    
    type Point is range 0 .. 999_999;
+   
+   function Image (P : Point) return String;
+   
+   subtype Version_String is String
+     with Dynamic_Predicate => (for all S of Version_String => S /= ' ');
    
    type Version (<>) is private;
    
@@ -24,10 +31,27 @@ package Semantic_Versioning with Preelaborate is
    -- Refer to http://semver.org/ for the exact meaning of each part.
    -- Only the three numbers are mandatory.
    
-   function New_Version (Description : String) return Version;   
-   function V           (Description : String) return Version renames New_Version;
+   function New_Version (Description : Version_String) return Version;   
+   function V           (Description : Version_String) return Version renames New_Version;
    
-   function "<" (L, R : Version) return Boolean;         
+   function "<" (L, R : Version) return Boolean;    
+   -- Refer to http://semver.org/ for the exact ordering. Most notably:
+   -- A version with pre-release tag is earlier than its regular version.
+   -- Build info is not taken into account to determine ordering.
+   
+   function Image (V : Version) return Version_String;
+   
+   function Next_Patch (V : Version;
+                        Pre_Release, 
+                        Build : String := "") return Version;
+   
+   function Next_Minor (V : Version;
+                        Pre_Release, 
+                        Build : String := "") return Version;
+   
+   function Next_Major (V : Version;
+                        Pre_Release, 
+                        Build : String := "") return Version;
    
    function At_Least  (V : Version) return Version_Set;
    function At_Most   (V : Version) return Version_Set;
@@ -37,34 +61,91 @@ package Semantic_Versioning with Preelaborate is
    
    function "and" (VS1, VS2 : Version_Set) return Version_Set;
    
-   function Is_In     (V : Version; R : Version_Set) return Boolean;
-   function Satisfies (V : Version; R : Version_Set) return Boolean renames Is_In;
+   function Is_In     (V : Version; VS : Version_Set) return Boolean;
+   function Satisfies (V : Version; VS : Version_Set) return Boolean renames Is_In;
    
 private
    
-   subtype UString is Ada.Strings.Unbounded.Unbounded_String;
+   package UStrings renames Ada.Strings.Unbounded;
+   subtype UString is UStrings.Unbounded_String;
    
    type Version is record
       Major,
       Minor,
-      Patch : Natural;
+      Patch : Point := 0;
       Pre_Release,
-      Build : UString;
+      Build : UString := Ada.Strings.Unbounded.Null_Unbounded_String;
    end record;
+   
+   function New_Version (Major : Point;
+                         Minor, 
+                         Patch : Point := 0;
+                         Pre_Release,
+                         Build : String := "") return Version 
+   is (Major => Major,
+       Minor => Minor,
+       Patch => Patch,
+       Pre_Release => UStrings.To_Unbounded_String (Pre_Release),
+       Build       => UStrings.To_Unbounded_String (Build));
+   
+   function Next_Patch (V : Version;
+                        Pre_Release, 
+                        Build : String := "") return Version
+   is (New_Version (V.Major,
+                    V.Minor,
+                    V.Patch + 1,
+                    Pre_Release,
+                    Build));       
+   
+   function Next_Minor (V : Version;
+                        Pre_Release, 
+                        Build : String := "") return Version
+   is (New_Version (V.Major,
+                    V.Minor + 1,
+                    0,
+                    Pre_Release,
+                    Build));     
+   
+   function Next_Major (V : Version;
+                        Pre_Release, 
+                        Build : String := "") return Version
+   is (New_Version (V.Major + 1,
+                    0,
+                    0,
+                    Pre_Release,
+                    Build));     
    
    type Conditions is (At_Least, At_Most, Exactly, Except);
    
    type Restriction is record
       Condition  : Conditions;
       On_Version : Version;
-   end record;     
+   end record;           
+   
+   function Satisfies (V : Version; R : Restriction) return Boolean;
    
    type Version_Set is array (Positive range <>) of Restriction;      
+   
+   function At_Least  (V : Version) return Version_Set is (1 => (At_Least, V));   
+   function At_Most   (V : Version) return Version_Set is (1 => (At_Most, V));
+   function Less_Than (V : Version) return Version_Set is (At_Most (V) and Except (V));   
+   function Exactly   (V : Version) return Version_Set is (1 => (Exactly, V));
+   function Except    (V : Version) return Version_Set is (1 => (Except, V));
    
    None : constant Version_Set := (1 .. 0 => <>);
    
    function "and" (VS1, VS2 : Version_Set) return Version_Set is (VS1 & VS2);
    
-   function Less_Than (V : Version) return Version_Set is (At_Most (V) and Except (V));   
-
+   function Image (P : Point) return String is
+      (Ada.Strings.Fixed.Trim (P'Image, Ada.Strings.Both));
+   
+   use type UString;
+   
+   function Image (V : Version) return Version_String is
+     (Image (V.Major) & "." &
+      Image (V.Minor) & "." &
+      Image (V.Patch) &
+      (if V.Pre_Release /= "" then "-" & Ustrings.To_String (V.Pre_Release) else "") &
+      (if V.Build /= "" then "+" & Ustrings.To_String (V.Build) else ""));
+   
 end Semantic_Versioning;
