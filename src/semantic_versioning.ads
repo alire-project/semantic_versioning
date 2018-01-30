@@ -1,3 +1,4 @@
+private with Ada.Containers.Vectors;
 private with Ada.Strings;
 private with Ada.Strings.Fixed;
 private with Ada.Strings.Unbounded;
@@ -11,17 +12,16 @@ package Semantic_Versioning with Preelaborate is
    subtype Version_String is String
      with Dynamic_Predicate => (for all S of Version_String => S /= ' ');
    
-   type Version (<>) is private;
-   
+   type Version is private;   
    --  A version is a major, minor and patch number
    --  Optionally it may include pre-release name and build metadata, e.g.:
    --  1.2.0-alpha+c3423fab   
    
-   type Version_Set (<>) is private;      
+   type Version_Set is private;      
    
    --  A collection of versions (usually a compatible subset) 
    
-   None : constant Version_Set;   
+   Any : constant Version_Set;   
    
    function New_Version (Major : Point;
                          Minor, 
@@ -84,7 +84,7 @@ private
       Patch : Point := 0;
       Pre_Release,
       Build : UString := Ada.Strings.Unbounded.Null_Unbounded_String;
-   end record;
+   end record;   
    
    function Major (V : Version) return Point is (V.Major);
    function Minor (V : Version) return Point is (V.Minor);
@@ -139,19 +139,21 @@ private
    
    function Satisfies (V : Version; R : Restriction) return Boolean;
    
-   type Version_Set is array (Positive range <>) of Restriction;      
+   package Restrictions is new Ada.Containers.Vectors (Positive, Restriction);
+   
+   type Version_Set is new Restrictions.Vector with null record;
    
    function At_Least_Within_Major (V : Version) return Version_Set is
       (At_Least (V) and Less_Than (Next_Major (V)));
    
-   function At_Least  (V : Version) return Version_Set is (1 => (At_Least, V));   
-   function At_Most   (V : Version) return Version_Set is (1 => (At_Most, V));
+   function At_Least  (V : Version) return Version_Set is (To_Vector ((At_Least, V), 1));   
+   function At_Most   (V : Version) return Version_Set is (To_Vector ((At_Most, V), 1));
    function Less_Than (V : Version) return Version_Set is (At_Most (V) and Except (V));   
    function More_Than (V : Version) return Version_Set is (At_Least (V) and Except (V));
-   function Exactly   (V : Version) return Version_Set is (1 => (Exactly, V));
-   function Except    (V : Version) return Version_Set is (1 => (Except, V));
+   function Exactly   (V : Version) return Version_Set is (To_Vector ((Exactly, V), 1));
+   function Except    (V : Version) return Version_Set is (To_Vector ((Except, V), 1));
    
-   None : constant Version_Set := (1 .. 0 => <>);
+   Any : constant Version_Set := (Restrictions.Empty_Vector with null record);
    
    function "and" (VS1, VS2 : Version_Set) return Version_Set is (VS1 & VS2);
    
