@@ -158,7 +158,7 @@ private
    function "and" (VS1, VS2 : Version_Set) return Version_Set is (VS1 & VS2);
    
    function Image (P : Point) return String is
-      (Ada.Strings.Fixed.Trim (P'Image, Ada.Strings.Both));
+      (Ada.Strings.Fixed.Trim (P'Img, Ada.Strings.Both));
    
    use type UString;
    
