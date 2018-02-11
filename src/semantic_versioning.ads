@@ -5,7 +5,8 @@ private with Ada.Strings.Unbounded;
 
 package Semantic_Versioning with Preelaborate is
 
-   type Point is range 0 .. 999_999;
+   type Point is range 0 .. 99_999_999;
+   --  Enough to store a YYYYMMDD as a point
 
    function Image (P : Point) return String;
 

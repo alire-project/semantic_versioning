@@ -91,7 +91,7 @@ package body Semantic_Versioning is
             Find_Token (Description,
                         (case Seen is
                             when None | Major | Minor => To_Set ("0123456789"),
-                            when Patch                => To_Set ("-+"),
+                            when Patch                => To_Set ("+"),
                             when Prerel               => raise Program_Error with "Shouldn't be reached"),
                         Last + 1,
                         (if Seen in None | Major | Minor then Inside else Outside),
@@ -128,7 +128,7 @@ package body Semantic_Versioning is
 
                when Patch =>
                   --  If here the coming one is for real a pre-release (checked below in previous round)
-                  V.Pre_Release := To_Unbounded_String (Description (First .. Last));
+                  V.Pre_Release := To_Unbounded_String (Description (First + 1 .. Last));
                   Seen := Prerel;
                   exit when Last = Description'Last;
 
@@ -144,7 +144,16 @@ package body Semantic_Versioning is
 
                when Major | Minor =>
                   if Description (Last + 1) /= '.' then -- either pre-rel or build coming
-                     Seen := Patch;
+                     if Description (Last + 1) = '-' then
+                        Seen := Patch;
+                     else
+                        if Description (Last + 1) = '+' then
+                           V.Build := To_Unbounded_String (Description (Last + 2 .. Description'Last));
+                        else
+                           V.Build := To_Unbounded_String (Description (Last + 1 .. Description'Last));
+                        end if;
+                        exit;
+                     end if;
                   end if;
 
                when Patch =>
