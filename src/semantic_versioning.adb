@@ -68,6 +68,112 @@ package body Semantic_Versioning is
       end return;
    end New_Version;
 
+   -------------
+   -- Relaxed --
+   -------------
+
+   function Relaxed (Description : Version_String) return Version is
+      use Ada.Strings;
+      use Ada.Strings.Maps;
+      use Ada.Strings.Fixed;
+      use Ustrings;
+
+      type Seen_Parts is (None, Major, Minor, Patch, Prerel);
+      Seen : Seen_Parts := None;
+
+      First : Integer;
+      Last  : Integer := Description'First - 1;
+   begin
+      return V : Version do
+         loop
+            exit when Last = Description'Last;
+
+            Find_Token (Description,
+                        (case Seen is
+                            when None | Major | Minor => To_Set ("0123456789"),
+                            when Patch                => To_Set ("-+"),
+                            when Prerel               => raise Program_Error with "Shouldn't be reached"),
+                        Last + 1,
+                        (if Seen in None | Major | Minor then Inside else Outside),
+                        First, Last);
+
+            exit when Last = 0;
+
+            --  Seen corresponds to previous round
+            case Seen is
+               when None =>
+                  V.Major := Point'Value (Description (First .. Last));
+                  Seen := Major;
+                  exit when Last = Description'Last;
+
+               when Major =>
+                  if Last >= First then
+                     V.Minor := Point'Value (Description (First .. Last));
+                     Seen := Minor;
+                  else
+                     --  Minor should be comming, but wasn't
+                     Seen := Patch;
+                  end if;
+                  exit when Last = Description'Last;
+
+               when Minor =>
+                  if Last >= First then
+                     V.Patch := Point'Value (Description (First .. Last));
+                     Seen := Patch;
+                  else
+                     --  Minor should be comming, but wasn't
+                     Seen := Patch;
+                  end if;
+                  exit when Last = Description'Last;
+
+               when Patch =>
+                  --  If here the coming one is for real a pre-release (checked below in previous round)
+                  V.Pre_Release := To_Unbounded_String (Description (First .. Last));
+                  Seen := Prerel;
+                  exit when Last = Description'Last;
+
+               when Prerel =>
+                  raise Program_Error with "Shouldn't be reached";
+            end case;
+
+            --  Abrupt end?
+            --  Seen correspond to just seen in current round
+            case Seen is
+               when None =>
+                  raise Program_Error with "Should never happen";
+
+               when Major | Minor =>
+                  if Description (Last + 1) /= '.' then -- either pre-rel or build coming
+                     Seen := Patch;
+                  end if;
+
+               when Patch =>
+                  if Description (Last + 1) /= '-' then -- remainder is build for sure
+                     if Description (Last + 1) = '+' then
+                        V.Build := To_Unbounded_String (Description (Last + 2 .. Description'Last));
+                     else
+                        V.Build := To_Unbounded_String (Description (Last + 1 .. Description'Last));
+                     end if;
+                     exit;
+                  else
+                     -- Continue normally
+                     null;
+                  end if;
+
+               when Prerel =>
+                  -- Time to end this misery
+                  if Description (Last + 1) = '+' then
+                     V.Build := To_Unbounded_String (Description (Last + 2 .. Description'Last));
+                  else
+                     V.Build := To_Unbounded_String (Description (Last + 1 .. Description'Last));
+                  end if;
+                  exit;
+
+            end case;
+         end loop;
+      end return;
+   end Relaxed;
+
    ---------------------------
    -- Less_Than_Pre_Release --
    ---------------------------
