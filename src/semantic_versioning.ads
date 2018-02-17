@@ -38,7 +38,11 @@ package Semantic_Versioning with Preelaborate is
 
    function Relaxed (Description : Version_String) return Version;
    --  This parser will attempt to follow spec as much as possible.
-   --  Anything not conforming will be shoved into the pre-release or build part (depending on separator)
+   --  Anything not conforming will be shoved into the pre-release (if '-' separator) or build part (otherwise)
+
+   function Image (V : Version) return Version_String;
+
+   function Image (VS : Version_Set) return String is ("(unknown)");
 
    function "<" (L, R : Version) return Boolean;
    -- Refer to http://semver.org/ for the exact ordering. Most notably:
@@ -50,8 +54,6 @@ package Semantic_Versioning with Preelaborate is
    function Patch (V : Version) return Point;
    function Pre_Release (V : Version) return String;
    function Build (V : Version) return String;
-
-   function Image (V : Version) return Version_String;
 
    function Next_Patch (V : Version;
                         Pre_Release,
@@ -65,14 +67,19 @@ package Semantic_Versioning with Preelaborate is
                         Pre_Release,
                         Build : String := "") return Version;
 
-   function At_Least_Within_Major (V : Version) return Version_Set;
-
    function At_Least  (V : Version) return Version_Set;
    function At_Most   (V : Version) return Version_Set;
    function Less_Than (V : Version) return Version_Set;
    function More_Than (V : Version) return Version_Set;
    function Exactly   (V : Version) return Version_Set;
    function Except    (V : Version) return Version_Set;
+
+   function Within_Major (V : Version) return Version_Set;
+   -- The "^" caret operator, any version from V up to Next_Major (V)
+
+   function Within_Minor (V : Version) return Version_Set;
+   -- Similar to "~" tilde operator, any version from V up to Next_Minor (V)
+   -- BUT note that it is always up to minor (unlike usual ~ implementations)
 
    function "and" (VS1, VS2 : Version_Set) return Version_Set;
 
@@ -149,15 +156,19 @@ private
 
    type Version_Set is new Restrictions.Vector with null record;
 
-   function At_Least_Within_Major (V : Version) return Version_Set is
-      (At_Least (V) and Less_Than (Next_Major (V)));
+   --  Generator functions
 
    function At_Least  (V : Version) return Version_Set is (To_Vector ((At_Least, V), 1));
    function At_Most   (V : Version) return Version_Set is (To_Vector ((At_Most, V), 1));
-   function Less_Than (V : Version) return Version_Set is (At_Most (V) and Except (V));
-   function More_Than (V : Version) return Version_Set is (At_Least (V) and Except (V));
    function Exactly   (V : Version) return Version_Set is (To_Vector ((Exactly, V), 1));
    function Except    (V : Version) return Version_Set is (To_Vector ((Except, V), 1));
+
+   --  Secondary functions
+
+   function Less_Than (V : Version) return Version_Set is (At_Most (V) and Except (V));
+   function More_Than (V : Version) return Version_Set is (At_Least (V) and Except (V));
+   function Within_Major (V : Version) return Version_Set is (At_Least (V) and Less_Than (Next_Major (V)));
+   function Within_Minor (V : Version) return Version_Set is (At_Least (V) and Less_Than (Next_Minor (V)));
 
    Any : constant Version_Set := (Restrictions.Empty_Vector with null record);
 
