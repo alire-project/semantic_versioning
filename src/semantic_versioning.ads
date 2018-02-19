@@ -42,7 +42,7 @@ package Semantic_Versioning with Preelaborate is
 
    function Image (V : Version) return Version_String;
 
-   function Image (VS : Version_Set) return String is ("(unknown)");
+   function Image (VS : Version_Set) return String;
 
    function "<" (L, R : Version) return Boolean;
    -- Refer to http://semver.org/ for the exact ordering. Most notably:

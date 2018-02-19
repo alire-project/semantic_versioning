@@ -2,6 +2,26 @@ with Ada.Strings.Maps;
 
 package body Semantic_Versioning is
 
+   function Image (VS : Version_Set) return String is
+
+      function Inner_Image (VS : Version_Set) return String is
+         Cond   : constant Restriction := VS.First_Element;
+         Remain : Version_Set := VS;
+      begin
+         Remain.Delete_First;
+
+         return Cond.Condition'Img & "(" & Image (Cond.On_Version) & ")" &
+           (if Natural (VS.Length) > 1 then " and " & Inner_Image (Remain) else "");
+      end Inner_Image;
+
+   begin
+      if VS.Is_Empty then
+         return "Any version";
+      else
+         return Inner_Image (VS);
+      end if;
+   end Image;
+
    -----------------
    -- New_Version --
    -----------------
