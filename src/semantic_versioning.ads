@@ -49,6 +49,9 @@ package Semantic_Versioning with Preelaborate is
    -- A version with pre-release tag is earlier than its regular version.
    -- Build info is not taken into account to determine ordering.
 
+   function "=" (L, R : Version) return Boolean;
+   -- Conforming to Semver spec, the build metadata is not included in the comparison.
+
    function Major (V : Version) return Point;
    function Minor (V : Version) return Point;
    function Patch (V : Version) return Point;
@@ -90,6 +93,7 @@ private
 
    package UStrings renames Ada.Strings.Unbounded;
    subtype UString is UStrings.Unbounded_String;
+   use all type UString;
 
    type Version is record
       Major,
@@ -98,6 +102,12 @@ private
       Pre_Release,
       Build : UString := Ada.Strings.Unbounded.Null_Unbounded_String;
    end record;
+
+   function "=" (L, R : Version) return Boolean is
+     (L.Major = R.Major and then
+      L.Minor = R.Minor and then
+      L.Patch = R.Patch and then
+      L.Pre_Release = R.Pre_Release);
 
    function Major (V : Version) return Point is (V.Major);
    function Minor (V : Version) return Point is (V.Minor);
@@ -176,8 +186,6 @@ private
 
    function Image (P : Point) return String is
       (Ada.Strings.Fixed.Trim (P'Img, Ada.Strings.Both));
-
-   use type UString;
 
    function Image (V : Version) return Version_String is
      (Image (V.Major) & "." &

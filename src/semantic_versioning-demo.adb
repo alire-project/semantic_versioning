@@ -59,4 +59,9 @@ begin
    pragma Assert (V ("1.2.0") = Next_Minor (V1_1_0));
    pragma Assert (V ("2.0.0") = Next_Major (V1_1_0));
 
+   -- Same version
+   pragma Assert (V ("1.0.0") = V ("1.0.0"));
+   pragma Assert (V ("1.0.0") = V ("1.0.0+buildmetadata"));
+   pragma Assert (V ("1.0.0") /= V ("1.0.0-prerelease"));
+
 end Semantic_Versioning.Demo;
