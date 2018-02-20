@@ -1,6 +1,23 @@
 with Ada.Strings.Maps;
 
+with Gnat.Case_Util;
+
 package body Semantic_Versioning is
+
+   -------------------
+   -- To_Mixed_Case --
+   -------------------
+
+   function To_Mixed_Case (S : String) return String is
+   begin
+      return SMC : String := S do
+         GNAT.Case_Util.To_Mixed (SMC);
+      end return;
+   end To_Mixed_Case;
+
+   -----------
+   -- Image --
+   -----------
 
    function Image (VS : Version_Set) return String is
 
@@ -10,13 +27,13 @@ package body Semantic_Versioning is
       begin
          Remain.Delete_First;
 
-         return Cond.Condition'Img & "(" & Image (Cond.On_Version) & ")" &
+         return To_Mixed_Case (Cond.Condition'Img) & "(" & Image (Cond.On_Version) & ")" &
            (if Natural (VS.Length) > 1 then " and " & Inner_Image (Remain) else "");
       end Inner_Image;
 
    begin
       if VS.Is_Empty then
-         return "Any version";
+         return "Any";
       else
          return Inner_Image (VS);
       end if;
