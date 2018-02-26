@@ -153,7 +153,7 @@ private
                     Pre_Release,
                     Build));
 
-   type Conditions is (At_Least, At_Most, Exactly, Except);
+   type Conditions is (At_Least, At_Most, Exactly, Except, Within_Major, Within_Minor);
 
    type Restriction is record
       Condition  : Conditions;
@@ -173,12 +173,13 @@ private
    function Exactly   (V : Version) return Version_Set is (To_Vector ((Exactly, V), 1));
    function Except    (V : Version) return Version_Set is (To_Vector ((Except, V), 1));
 
+   function Within_Major (V : Version) return Version_Set is (To_Vector ((Within_Major, V), 1));
+   function Within_Minor (V : Version) return Version_Set is (To_Vector ((Within_Minor, V), 1));
+
    --  Secondary functions
 
    function Less_Than (V : Version) return Version_Set is (At_Most (V) and Except (V));
    function More_Than (V : Version) return Version_Set is (At_Least (V) and Except (V));
-   function Within_Major (V : Version) return Version_Set is (At_Least (V) and Less_Than (Next_Major (V)));
-   function Within_Minor (V : Version) return Version_Set is (At_Least (V) and Less_Than (Next_Minor (V)));
 
    Any : constant Version_Set := (Restrictions.Empty_Vector with null record);
 

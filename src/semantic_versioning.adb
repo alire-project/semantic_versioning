@@ -335,6 +335,11 @@ package body Semantic_Versioning is
             return V = R.On_Version;
          when Except =>
             return V /= R.On_Version;
+         when Within_Major =>
+            return (R.On_Version < V or else R.On_Version = V) and then R.On_Version.Major = V.Major;
+         when Within_Minor =>
+            return (R.On_Version < V or else R.On_Version = V) and Then
+                    R.On_Version.Major = V.Major and then R.On_Version.Minor = V.Minor;
       end case;
    end Satisfies;
 

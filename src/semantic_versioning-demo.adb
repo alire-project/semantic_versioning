@@ -24,6 +24,14 @@ begin
 
    pragma Assert (Satisfies (V1_1_0, At_Least (V1_0_0) and At_Most (V1_1_1)));
 
+   pragma Assert (Satisfies (V ("1.1.9"),     Within_Major (V ("1.1.0"))));
+   pragma Assert (not Satisfies (V ("1.1.9"), Within_Major (V ("2.0.0-alpha"))));
+   pragma Assert (not Satisfies (V ("2.0.0-alpha"), Within_Major (V ("1.0.0"))));
+
+   pragma Assert (Satisfies (V ("1.1.9"),     Within_Minor (V ("1.1.0"))));
+   pragma Assert (not Satisfies (V ("1.1.9"), Within_Minor (V ("1.2.0-alpha"))));
+   pragma Assert (not Satisfies (V ("1.2.0-alpha"), Within_Minor (V ("1.1.0"))));
+
    -- Reconstruction
    pragma Assert (Image (V1_0_0_Alpha) = V1_0_0_Alpha_Img);
 
