@@ -39,186 +39,166 @@ package body Semantic_Versioning is
       end if;
    end Image;
 
-   -----------------
-   -- New_Version --
-   -----------------
+   -----------
+   -- Parse --
+   -----------
 
-   function New_Version (Description : Version_String) return Version is
-      use Ada.Strings;
-      use Ada.Strings.Fixed;
-      use Ada.Strings.Maps;
-      use Ustrings;
+   function Parse (Description : Version_String;
+                   Relaxed     : Boolean := False) return Version
+   is
+      Next : Positive := Description'First;
+      V    : Version;
 
-      First : Integer;
-      Last  : Integer := Description'First - 1;
+      type Tokens is      (Number, Dot, Minus, Plus, Other, Done);
+      type Foreseeable is (Major, Minor, Patch, Nothing);
 
-      type Seen_Parts is (None, Major, Minor, Patch);
-      Seen : Seen_Parts := None;
-   begin
-      return V : Version do
-         loop
-            exit when Last = Description'Last;
+      To_See : Foreseeable := Major;
 
-            Find_Token (Description, (if Seen = Patch then To_Set ("+-")
-                                                      else To_Set (".+-")),
-                        Last + 1, Outside, First, Last);
-            -- Whenever we move past the Patch number, there can be new dots in the
-            -- Pre-release or build info
+      ---------------
+      -- Next_Char --
+      ---------------
 
-            exit when Last = 0;
+      function Next_Char return Character is
+         (Description (Next));
 
-            if First = Description'First then -- Major
-               V.Major := Point'Value (Description (First .. Last));
-               Seen    := Major;
-            else
-               if Seen = None then
-                  raise Constraint_Error with "Major not found: " & Description;
+      ----------------
+      -- Next_Token --
+      ----------------
+
+      function Next_Token (At_Position : Natural := Next) return Tokens is
+        (if At_Position > Description'Last
+         then Done
+         else
+           (case Description (At_Position) is
+               when '.' => Dot,
+               when '+' => Plus,
+               when '-' => Minus,
+               when '0' .. '9' => Number,
+               when others     => Other));
+
+      ----------------
+      -- Eat_Number --
+      ----------------
+
+      function Eat_Number return Point is
+         Last : Natural := Next + 1;
+      begin
+         while Last <= Description'Last and then Next_Token (Last) = Number loop
+            Last := Last + 1;
+         end loop;
+
+         return Number : constant Point := Point'Value (Description (Next .. Last - 1)) do
+            Next := Last;
+         end return;
+      end Eat_Number;
+
+      --------------
+      -- Eat_Char --
+      --------------
+
+      procedure Eat_Char is
+      begin
+         Next := Next + 1;
+      end Eat_Char;
+
+      ------------------
+      -- Accept_Build --
+      ------------------
+
+      procedure Accept_Build is
+      begin
+         V.Build := Ustrings.To_Unbounded_String (Description (Next .. Description'Last));
+         Next    := Description'Last + 1;
+      end Accept_Build;
+
+      ----------------
+      -- Accept_Pre --
+      ----------------
+
+      procedure Accept_Pre is
+         Last : Natural := Next + 1;
+      begin
+         while Last <= Description'Last and then Description (Last) /= '+' loop
+            Last := Last + 1;
+         end loop;
+
+         if Last = Next + 1 then
+            raise Constraint_Error with "Empty pre-release part: " & Description;
+         end if;
+
+         if not Relaxed then
+            for C of Description (Next .. Last - 1) loop
+               if C = '-' then
+                  raise Constraint_Error with "Second '-' found inside pre-release part: " & Description;
                end if;
+            end loop;
+         end if;
 
-               case Description (First - 1) is
-                  when '.' =>
-                     if V.Pre_Release /= "" or else V.Build /= "" then
-                        raise Constraint_Error with "Point after +-: " & Description;
-                     end if;
+         V.Pre_Release := UStrings.To_Unbounded_String (Description (Next .. Last - 1));
+         Next := Last;
 
-                     if Seen = Major then
-                        V.Minor := Point'Value (Description (First .. Last));
-                        Seen    := Minor;
-                     elsif Seen = Minor then
-                        V.Patch := Point'Value (Description (First .. Last));
-                        Seen    := Patch;
-                     else
-                        raise Constraint_Error with "Too many dots in version: " & Description;
-                     end if;
-                  when '-' =>
-                     if V.Build /= "" then
-                        raise Constraint_Error with "Build before Pre-Release: " & Description;
-                     end if;
-                     V.Pre_Release := To_Unbounded_String (Description (First .. Last));
-                  when '+' =>
-                     V.Build := To_Unbounded_String (Description (First .. Last));
-                  when others =>
-                     raise Constraint_Error with "Invalid separator: " & Description (First - 1);
-               end case;
-            end if;
-         end loop;
-      end return;
-   end New_Version;
+         case Next_Token is
+            when Done => null;
+            when Plus =>
+               Eat_Char;
+               Accept_Build;
+            when others =>
+               raise Program_Error with "Unexpected token after pre-release: " & Description;
+         end case;
+      end Accept_Pre;
 
-   -------------
-   -- Relaxed --
-   -------------
+      -------------------
+      -- Accept_Number --
+      -------------------
 
-   function Relaxed (Description : Version_String) return Version is
-      use Ada.Strings;
-      use Ada.Strings.Maps;
-      use Ada.Strings.Fixed;
-      use Ustrings;
+      procedure Accept_Number is
+      begin
+         case To_See is
+            when Major => V.Major := Eat_Number;
+            when Minor => V.Minor := Eat_Number;
+            when Patch => V.Patch := Eat_Number;
+            when others => raise Constraint_Error with "All foreseeable points already seen";
+         end case;
+         To_See := Foreseeable'Succ (To_See);
 
-      type Seen_Parts is (None, Major, Minor, Patch, Prerel);
-      Seen : Seen_Parts := None;
+         case Next_Token is
+            when Number => raise Program_Error with "Number found after eating number";
+            when Dot    =>
+               if To_See = Nothing then
+                  if Relaxed then
+                     Eat_Char;
+                     Accept_Build;
+                  else
+                     raise Constraint_Error with "Too many points in version: " & Description;
+                  end if;
+               else
+                  Eat_Char;
+                  Accept_Number;
+               end if;
+            when Minus  =>
+               Eat_Char;
+               Accept_Pre;
+            when Plus   =>
+               Eat_Char;
+               Accept_Build;
+            when Other  =>
+               if Relaxed Then
+                  Accept_Build;
+               else
+                  raise Constraint_Error with "Invalid separator after major number: " & Next_Char;
+               end if;
+            when Done   => null;
+         end case;
+      end Accept_Number;
 
-      First : Integer;
-      Last  : Integer := Description'First - 1;
    begin
-      return V : Version do
-         loop
-            exit when Last = Description'Last;
+      case Next_Token is
+         when Number => Accept_Number;
+         when others => raise Constraint_Error with "Major number expected";
+      end case;
 
-            Find_Token (Description,
-                        (case Seen is
-                            when None | Major | Minor => To_Set ("0123456789"),
-                            when Patch                => To_Set ("+"),
-                            when Prerel               => raise Program_Error with "Shouldn't be reached"),
-                        Last + 1,
-                        (if Seen in None | Major | Minor then Inside else Outside),
-                        First, Last);
-
-            exit when Last = 0;
-
-            --  Seen corresponds to previous round
-            case Seen is
-               when None =>
-                  V.Major := Point'Value (Description (First .. Last));
-                  Seen := Major;
-                  exit when Last = Description'Last;
-
-               when Major =>
-                  if Last >= First then
-                     V.Minor := Point'Value (Description (First .. Last));
-                     Seen := Minor;
-                  else
-                     --  Minor should be comming, but wasn't
-                     Seen := Patch;
-                  end if;
-                  exit when Last = Description'Last;
-
-               when Minor =>
-                  if Last >= First then
-                     V.Patch := Point'Value (Description (First .. Last));
-                     Seen := Patch;
-                  else
-                     --  Minor should be comming, but wasn't
-                     Seen := Patch;
-                  end if;
-                  exit when Last = Description'Last;
-
-               when Patch =>
-                  --  If here the coming one is for real a pre-release (checked below in previous round)
-                  V.Pre_Release := To_Unbounded_String (Description (First + 1 .. Last));
-                  Seen := Prerel;
-                  exit when Last = Description'Last;
-
-               when Prerel =>
-                  raise Program_Error with "Shouldn't be reached";
-            end case;
-
-            --  Abrupt end?
-            --  Seen correspond to just seen in current round
-            case Seen is
-               when None =>
-                  raise Program_Error with "Should never happen";
-
-               when Major | Minor =>
-                  if Description (Last + 1) /= '.' then -- either pre-rel or build coming
-                     if Description (Last + 1) = '-' then
-                        Seen := Patch;
-                     else
-                        if Description (Last + 1) = '+' then
-                           V.Build := To_Unbounded_String (Description (Last + 2 .. Description'Last));
-                        else
-                           V.Build := To_Unbounded_String (Description (Last + 1 .. Description'Last));
-                        end if;
-                        exit;
-                     end if;
-                  end if;
-
-               when Patch =>
-                  if Description (Last + 1) /= '-' then -- remainder is build for sure
-                     if Description (Last + 1) = '+' then
-                        V.Build := To_Unbounded_String (Description (Last + 2 .. Description'Last));
-                     else
-                        V.Build := To_Unbounded_String (Description (Last + 1 .. Description'Last));
-                     end if;
-                     exit;
-                  else
-                     -- Continue normally
-                     null;
-                  end if;
-
-               when Prerel =>
-                  -- Time to end this misery
-                  if Description (Last + 1) = '+' then
-                     V.Build := To_Unbounded_String (Description (Last + 2 .. Description'Last));
-                  else
-                     V.Build := To_Unbounded_String (Description (Last + 1 .. Description'Last));
-                  end if;
-                  exit;
-
-            end case;
-         end loop;
-      end return;
-   end Relaxed;
+      return V;
+   end Parse;
 
    ---------------------------
    -- Less_Than_Pre_Release --

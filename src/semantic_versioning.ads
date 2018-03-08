@@ -32,11 +32,14 @@ package Semantic_Versioning with Preelaborate is
    -- Refer to http://semver.org/ for the exact meaning of each part.
    -- Only the three numbers are mandatory.
 
-   function New_Version (Description : Version_String) return Version;
+   function Parse (Description : Version_String;
+                   Relaxed     : Boolean := False) return Version;
+
+   function New_Version (Description : Version_String) return Version is (Parse (Description));
    function V           (Description : Version_String) return Version renames New_Version;
    --  These are strict parsers that will fail on versions not respecting the semver spec
 
-   function Relaxed (Description : Version_String) return Version;
+   function Relaxed (Description : Version_String) return Version is (Parse (Description, Relaxed => True));
    --  This parser will attempt to follow spec as much as possible.
    --  Anything not conforming will be shoved into the pre-release (if '-' separator) or build part (otherwise)
 

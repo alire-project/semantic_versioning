@@ -1,21 +1,10 @@
 project Semantic_Versioning is
 
-   type Project_Modes is
-      ("Library", "Executable");
-   Project_Mode : Project_Modes := external ("Mode", "Library");
    for Source_Dirs use ("src");
    for Object_Dir use "obj";
-   for Library_Dir use "lib";
    for Exec_Dir use "bin";
 
-   case Project_Mode is
-      when "Library" =>
-         for Library_Name use "semver";
-         for Library_Dir use "lib";
-
-      when "Executable" =>
-         for Main use ("semantic_versioning-demo.adb");
-   end case;
+   for Main use ("semantic_versioning-demo.adb");
 
    package Pretty_Printer is
       for Switches ("ada") use ("--no-separate-is");
@@ -40,11 +29,7 @@ project Semantic_Versioning is
    end Ide;
 
    package Linker is
-      case Project_Mode is
-         when "Executable" =>
-            for Switches ("ada") use ("-g");
-         when "Library" => null;
-      end case;
+      for Switches ("ada") use ("-g");
    end Linker;
 
 end Semantic_Versioning;
