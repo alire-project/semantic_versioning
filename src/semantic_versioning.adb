@@ -118,13 +118,13 @@ package body Semantic_Versioning is
       procedure Accept_Pre is
          Last : Natural := Next + 1;
       begin
+         if Next > Description'Last then
+            raise Constraint_Error with "Empty pre-release part: " & Description;
+         end if;
+
          while Last <= Description'Last and then Description (Last) /= '+' loop
             Last := Last + 1;
          end loop;
-
-         if Last = Next + 1 then
-            raise Constraint_Error with "Empty pre-release part: " & Description;
-         end if;
 
          if not Relaxed then
             for C of Description (Next .. Last - 1) loop
