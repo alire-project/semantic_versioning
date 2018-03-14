@@ -27,6 +27,32 @@ package Semantic_Versioning.Expressions with Preelaborate is
    function "/=" (L : LH; R : Version) return Result;
    function "/=" (L : LH; R : String)  return Result;
 
+   generic
+      type RH (<>) is private;
+      with function Get_Version (R : RH) return Version;
+   package Against is
+
+      --  Obtain version of some other type against which we compare
+
+      function "<"  (L : LH; R : RH) return Result;
+      function "<=" (L : LH; R : RH) return Result;
+      function "="  (L : LH; R : RH) return Result;
+      function ">=" (L : LH; R : RH) return Result;
+      function ">"  (L : LH; R : RH) return Result;
+      function "/=" (L : LH; R : RH) return Result;
+
+   private
+
+      function "<"  (L : LH; R : RH) return Result is (L <  Get_Version (R));
+      function "<=" (L : LH; R : RH) return Result is (L <= Get_Version (R));
+      function "="  (L : LH; R : RH) return Result is (L =  Get_Version (R));
+      function ">=" (L : LH; R : RH) return Result is (L >= Get_Version (R));
+      function ">"  (L : LH; R : RH) return Result is (L >  Get_Version (R));
+      function "/=" (L : LH; R : RH) return Result is (L /= Get_Version (R));
+
+   end Against;
+
+
 private
 
    function "<" (L : LH; R : Version) return Result is (Build_Condition (L, Less_Than (R)));
