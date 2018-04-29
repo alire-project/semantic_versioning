@@ -92,6 +92,19 @@ package Semantic_Versioning with Preelaborate is
    function Is_In     (V : Version; VS : Version_Set) return Boolean;
    function Satisfies (V : Version; VS : Version_Set) return Boolean renames Is_In;
 
+   --  Iteration over version sets contents
+
+   type Conditions is
+     (At_Least, At_Most, Exactly, Except, Within_Major, Within_Minor);
+
+   type Restriction is private;
+
+   function Condition  (R : Restriction) return Conditions;
+   function On_Version (R : Restriction) return Version;
+
+   function Length  (VS : Version_Set) return Natural; -- 0 is Any!
+   function Element (VS : Version_Set; I : Positive) return Restriction;
+
 private
 
    package UStrings renames Ada.Strings.Unbounded;
@@ -156,12 +169,13 @@ private
                     Pre_Release,
                     Build));
 
-   type Conditions is (At_Least, At_Most, Exactly, Except, Within_Major, Within_Minor);
-
    type Restriction is record
       Condition  : Conditions;
       On_Version : Version;
    end record;
+
+   function Condition  (R : Restriction) return Conditions is (R.Condition);
+   function On_Version (R : Restriction) return Version is (R.On_Version);
 
    function Satisfies (V : Version; R : Restriction) return Boolean;
 
@@ -197,5 +211,11 @@ private
       Image (V.Patch) &
       (if V.Pre_Release /= "" then "-" & Ustrings.To_String (V.Pre_Release) else "") &
       (if V.Build /= "" then "+" & Ustrings.To_String (V.Build) else ""));
+
+   function Length  (VS : Version_Set) return Natural is
+     (Natural (Restrictions.Vector (VS).Length));
+
+   function Element (VS : Version_Set; I : Positive) return Restriction is
+      (VS (I));
 
 end Semantic_Versioning;

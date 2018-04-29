@@ -28,7 +28,7 @@ package body Semantic_Versioning is
          Remain.Delete_First;
 
          return To_Mixed_Case (Cond.Condition'Img) & " (" & Image (Cond.On_Version) & ")" &
-           (if Natural (VS.Length) > 1 then " and " & Inner_Image (Remain) else "");
+           (if VS.Length > Natural'(1) then " and " & Inner_Image (Remain) else "");
       end Inner_Image;
 
    begin
