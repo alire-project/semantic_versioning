@@ -44,8 +44,10 @@ package Semantic_Versioning with Preelaborate is
    --  Anything not conforming will be shoved into the pre-release (if '-' separator) or build part (otherwise)
 
    function Image (V : Version) return Version_String;
+   --  Readable Ada-like text
 
    function Image (VS : Version_Set) return String;
+   --  Readable Ada-like text
 
    function "<" (L, R : Version) return Boolean;
    -- Refer to http://semver.org/ for the exact ordering. Most notably:
@@ -97,7 +99,13 @@ package Semantic_Versioning with Preelaborate is
    type Conditions is
      (At_Least, At_Most, Exactly, Except, Within_Major, Within_Minor);
 
+   function Operator (Condition : Conditions) return String;
+   --  Returns a short string with the visible operator: =, /=, ~, ...
+
    type Restriction is private;
+
+   function Operator_Image (R : Restriction) return String;
+   --  Image using operator (e.g., <=1.0.1, ~2.0.0, /=0.1.2)
 
    function Condition  (R : Restriction) return Conditions;
    function On_Version (R : Restriction) return Version;
@@ -216,6 +224,18 @@ private
      (Natural (Restrictions.Vector (VS).Length));
 
    function Element (VS : Version_Set; I : Positive) return Restriction is
-      (VS (I));
+     (VS (I));
+
+   function Operator (Condition : Conditions) return String is
+     (case Condition is
+         when At_Least => ">=",
+         when At_Most => "<=",
+         when Exactly => "=",
+         when Except => "/=",
+         when Within_Major => "^",
+         when Within_Minor => "~");
+
+   function Operator_Image (R : Restriction) return String is
+      (Operator (R.Condition) & Image (R.On_Version));
 
 end Semantic_Versioning;
