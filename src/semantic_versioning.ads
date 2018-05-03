@@ -37,6 +37,7 @@ package Semantic_Versioning with Preelaborate is
 
    function New_Version (Description : Version_String) return Version is (Parse (Description));
    function V           (Description : Version_String) return Version renames New_Version;
+   function "+"         (Description : Version_String) return Version renames New_Version;
    --  These are strict parsers that will fail on versions not respecting the semver spec
 
    function Relaxed (Description : Version_String) return Version is (Parse (Description, Relaxed => True));
