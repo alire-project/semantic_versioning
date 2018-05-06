@@ -70,7 +70,7 @@ private
    function ">" (L : LH; R : Version) return Result is (Build_Condition (L, More_Than (R)));
    function ">" (L : LH; R : String)  return Result is (L > Parse (R, not Strict));
 
-   function "/=" (L : LH; R : Version) return Result is (Build_Condition (L, Less_Than (R)));
+   function "/=" (L : LH; R : Version) return Result is (Build_Condition (L, Except (R)));
    function "/=" (L : LH; R : String)  return Result is (L /= Parse (R, not Strict));
 
 end Semantic_Versioning.Expressions;
