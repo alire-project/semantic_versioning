@@ -72,4 +72,22 @@ begin
    pragma Assert (V ("1.0.0") = V ("1.0.0+buildmetadata"));
    pragma Assert (V ("1.0.0") /= V ("1.0.0-prerelease"));
 
+   -- To Set from string
+   pragma Assert (Any = To_Set ("any"));
+   pragma Assert (Any = To_Set ("*"));
+
+   pragma Assert (Exactly (V1_0_0) = To_Set ("1.0.0"));
+   pragma Assert (Exactly (V1_0_0) = To_Set ("=1.0.0"));
+
+   pragma Assert (Except  (V1_0_0) = To_Set ("/=1.0.0"));
+   pragma Assert (Except  (V1_0_0) = To_Set ("≠1.0.0"));
+
+   pragma Assert (At_Least (V1_0_0) = To_Set (">=1.0.0"));
+   pragma Assert (At_Least (V1_0_0) = To_Set ("≥1.0.0"));
+
+   pragma Assert (At_Most (V1_0_0) = To_Set ("<=1.0.0"));
+   pragma Assert (At_Most (V1_0_0) = To_Set ("≤1.0.0"));
+
+   pragma Assert (More_Than (V1_0_0) = To_Set (">1.0.0"));
+   pragma Assert (Less_Than (V1_0_0) = To_Set ("<1.0.0"));
 end Semantic_Versioning.Demo;

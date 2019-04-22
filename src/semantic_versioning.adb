@@ -119,7 +119,7 @@ package body Semantic_Versioning is
          Last : Natural := Next + 1;
       begin
          if Next > Description'Last then
-            raise Constraint_Error with "Empty pre-release part: " & Description;
+            raise Malformed_Input with "Empty pre-release part: " & Description;
          end if;
 
          while Last <= Description'Last and then Description (Last) /= '+' loop
@@ -129,7 +129,7 @@ package body Semantic_Versioning is
          if not Relaxed then
             for C of Description (Next .. Last - 1) loop
                if C = '-' then
-                  raise Constraint_Error with "Second '-' found inside pre-release part: " & Description;
+                  raise Malformed_Input with "Second '-' found inside pre-release part: " & Description;
                end if;
             end loop;
          end if;
@@ -157,7 +157,7 @@ package body Semantic_Versioning is
             when Major => V.Major := Eat_Number;
             when Minor => V.Minor := Eat_Number;
             when Patch => V.Patch := Eat_Number;
-            when others => raise Constraint_Error with "All foreseeable points already seen";
+            when others => raise Malformed_Input with "All foreseeable points already seen";
          end case;
          To_See := Foreseeable'Succ (To_See);
 
@@ -169,7 +169,7 @@ package body Semantic_Versioning is
                      Eat_Char;
                      Accept_Build;
                   else
-                     raise Constraint_Error with "Too many points in version: " & Description;
+                     raise Malformed_Input with "Too many points in version: " & Description;
                   end if;
                else
                   Eat_Char;
@@ -185,7 +185,7 @@ package body Semantic_Versioning is
                if Relaxed Then
                   Accept_Build;
                else
-                  raise Constraint_Error with "Invalid separator after major number: " & Next_Char;
+                  raise Malformed_Input with "Invalid separator after major number: " & Next_Char;
                end if;
             when Done   => null;
          end case;
@@ -194,7 +194,7 @@ package body Semantic_Versioning is
    begin
       case Next_Token is
          when Number => Accept_Number;
-         when others => raise Constraint_Error with "Major number expected";
+         when others => raise Malformed_Input with "Major number expected";
       end case;
 
       return V;
@@ -322,5 +322,67 @@ package body Semantic_Versioning is
                     R.On_Version.Major = V.Major and then R.On_Version.Minor = V.Minor;
       end case;
    end Satisfies;
+
+   ------------
+   -- To_Set --
+   ------------
+
+   function To_Set (S : Version_String; Relaxed : Boolean := False) return Version_Set is
+      subtype Numbers is Character range '0' .. '9';
+
+      --  See if a substring is at the beginning of another, subrange-safe
+      function Begins_With (S : String; Pattern : String) return Boolean is
+        (if Pattern'Length >= S'Length then False -- We need at least one extra character for the actual version
+         else S (S'First .. S'First + Pattern'Length - 1) = Pattern);
+
+      --  Convenience to remove the operator, whatever its length
+      function Remainder (S : String; Pattern : String) return String is
+         (S (S'First + Pattern'Length .. S'Last));
+
+   begin
+      --  Special cases first
+      if S = "any" or else S = "*" then
+         return Any;
+      elsif S = "" then
+         raise Malformed_Input with "empty string";
+      elsif S (S'First) in Numbers then
+         return Exactly (Parse (S, Relaxed));
+      end if;
+
+      --  Simple cases
+      declare
+         Op      : constant Character := S (S'First);
+         Version : constant String    := S (S'First + 1 .. S'Last);
+      begin
+         case Op is
+            when '=' => return Exactly (Parse (Version, Relaxed));
+            when '^' => return Within_Major (Parse (Version, Relaxed));
+            when '~' => return Within_Minor (Parse (Version, Relaxed));
+            when others => null; -- Check next cases
+         end case;
+      end;
+
+      --  Rest of cases
+      if Begins_With (S, "/=") then
+         return Except (Parse (Remainder (S, "/="), Relaxed));
+      elsif Begins_With (S, "≠") then
+         return Except (Parse (Remainder (S, "≠"), Relaxed));
+      elsif Begins_With (S, ">=") then
+         return At_Least (Parse (Remainder (S, ">="), Relaxed));
+      elsif Begins_With (S, "≥") then
+         return At_Least (Parse (Remainder (S, "≥"), Relaxed));
+      elsif Begins_With (S, "<=") then
+         return At_most (Parse (Remainder (S, "<="), Relaxed));
+      elsif Begins_With (S, "≤") then
+         return At_Most (Parse (Remainder (S, "≤"), Relaxed));
+      elsif Begins_With (S, ">") then
+         return More_Than (Parse (Remainder (S, ">"), Relaxed));
+      elsif Begins_With (S, "<") then
+         return Less_Than (Parse (Remainder (S, "<"), Relaxed));
+      end if;
+
+      --  All others
+      raise Malformed_Input with "invalid set: " & S;
+   end To_Set;
 
 end Semantic_Versioning;

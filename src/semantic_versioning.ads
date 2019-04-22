@@ -5,6 +5,11 @@ private with Ada.Strings.Unbounded;
 
 package Semantic_Versioning with Preelaborate is
 
+   Malformed_Input : exception;
+   --  Returned whenever bad data is received. This includes, at least:
+   --  * Strings that do not follow semantic versioning, in strict parsing
+   --  * Unknown operators in string restrictions
+
    type Point is range 0 .. 99_999_999;
    --  Enough to store a YYYYMMDD as a point
 
@@ -34,6 +39,7 @@ package Semantic_Versioning with Preelaborate is
 
    function Parse (Description : Version_String;
                    Relaxed     : Boolean := False) return Version;
+   --  See Relaxed subprogram below for the meaning of Relaxed.
 
    function New_Version (Description : Version_String) return Version is (Parse (Description));
    function V           (Description : Version_String) return Version renames New_Version;
@@ -76,12 +82,18 @@ package Semantic_Versioning with Preelaborate is
                         Pre_Release,
                         Build : String := "") return Version;
 
-   function At_Least  (V : Version) return Version_Set;
-   function At_Most   (V : Version) return Version_Set;
-   function Less_Than (V : Version) return Version_Set;
-   function More_Than (V : Version) return Version_Set;
-   function Exactly   (V : Version) return Version_Set;
-   function Except    (V : Version) return Version_Set;
+   function To_Set (S : Version_String; Relaxed : Boolean := False) return Version_Set;
+   -- Parses a version set from a single restriction representation:
+   -- The following operators are recognized:
+   --   = /= ≠ > >= ≥ < ≤ <= ~ ^, with the meanings given in the following functions.
+   -- In addition, a plain version is equivalent to =, and "any", "*" is any version.
+
+   function At_Least  (V : Version) return Version_Set; -- >= ≥
+   function At_Most   (V : Version) return Version_Set; -- <= ≤
+   function Less_Than (V : Version) return Version_Set; -- <
+   function More_Than (V : Version) return Version_Set; -- >
+   function Exactly   (V : Version) return Version_Set; -- =
+   function Except    (V : Version) return Version_Set; -- /= ≠
 
    function Within_Major (V : Version) return Version_Set;
    -- The "^" caret operator, any version from V up to Next_Major (V)
