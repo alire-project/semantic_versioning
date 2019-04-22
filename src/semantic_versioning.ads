@@ -51,10 +51,18 @@ package Semantic_Versioning with Preelaborate is
    --  Anything not conforming will be shoved into the pre-release (if '-' separator) or build part (otherwise)
 
    function Image (V : Version) return Version_String;
-   --  Readable Ada-like text
+   --  Back to string representation
 
-   function Image (VS : Version_Set) return String;
-   --  Readable Ada-like text
+   function Image_Ada (VS : Version_Set) return String;
+   --  Ada-like textual representation.
+   --  E.g., "Within_Major ("1.0.0") and Except ("1.0.5")"
+
+   function Image_Abbreviated (VS             : Version_Set;
+                               Unicode        : Boolean := False;
+                               Implicit_Equal : Boolean := False) return String;
+   --  Comma separated; e.g. "^1.0.0,≠1.0.5"
+   --  If Unicode, the operator can be ≠, etc
+   --  If implicit equal, "=" will be omitted
 
    function "<" (L, R : Version) return Boolean;
    -- Refer to http://semver.org/ for the exact ordering. Most notably:
@@ -112,13 +120,20 @@ package Semantic_Versioning with Preelaborate is
    type Conditions is
      (At_Least, At_Most, Exactly, Except, Within_Major, Within_Minor);
 
-   function Operator (Condition : Conditions) return String;
+   function Operator (Condition      : Conditions;
+                      Unicode        : Boolean := False;
+                      Implicit_Equal : Boolean := False) return String;
    --  Returns a short string with the visible operator: =, /=, ~, ...
+   --  If Unicode, the operator can be ≠, etc
+   --  If implicit equal, "=" will be omitted
 
    type Restriction is private;
 
-   function Operator_Image (R : Restriction) return String;
+   function Operator_Image (R              : Restriction;
+                            Unicode        : Boolean := False;
+                            Implicit_Equal : Boolean := False) return String;
    --  Image using operator (e.g., <=1.0.1, ~2.0.0, /=0.1.2)
+   --  See Image (Set) for Unicode, Implicit_Equal meaning
 
    function Condition  (R : Restriction) return Conditions;
    function On_Version (R : Restriction) return Version;
@@ -239,16 +254,23 @@ private
    function Element (VS : Version_Set; I : Positive) return Restriction is
      (VS (I));
 
-   function Operator (Condition : Conditions) return String is
+   function Operator (Condition      : Conditions;
+                      Unicode        : Boolean := False;
+                      Implicit_Equal : Boolean := False) return String is
      (case Condition is
-         when At_Least => ">=",
-         when At_Most => "<=",
-         when Exactly => "=",
-         when Except => "/=",
+         when At_Least     => (if Unicode then "≥" else ">="),
+         when At_Most      => (if Unicode then "≤" else "<="),
+         when Exactly      => (if Implicit_Equal then "" else "="),
+         when Except       => (if Unicode then "≠" else "/="),
          when Within_Major => "^",
          when Within_Minor => "~");
 
-   function Operator_Image (R : Restriction) return String is
-      (Operator (R.Condition) & Image (R.On_Version));
+   function Operator_Image (R              : Restriction;
+                            Unicode        : Boolean := False;
+                            Implicit_Equal : Boolean := False) return String is
+     (Operator (R.Condition,
+                Unicode,
+                Implicit_Equal) &
+        Image (R.On_Version));
 
 end Semantic_Versioning;

@@ -1,3 +1,4 @@
+with Ada.Characters.Handling;
 with Ada.Strings.Maps;
 
 with Gnat.Case_Util;
@@ -15,11 +16,40 @@ package body Semantic_Versioning is
       end return;
    end To_Mixed_Case;
 
-   -----------
-   -- Image --
-   -----------
+   -----------------------
+   -- Image_Abbreviated --
+   -----------------------
 
-   function Image (VS : Version_Set) return String is
+   function Image_Abbreviated (VS             : Version_Set;
+                               Unicode        : Boolean := False;
+                               Implicit_Equal : Boolean := False) return String
+   is
+
+      function Inner_Image (VS : Version_Set) return String is
+         Cond   : constant Restriction := VS.First_Element;
+         Remain : Version_Set := VS;
+      begin
+         Remain.Delete_First;
+
+         return Operator_Image (Cond, Unicode, Implicit_Equal) &
+         (if VS.Length > Natural'(1)
+          then "," & Inner_Image (Remain)
+          else "");
+      end Inner_Image;
+
+   begin
+      if VS.Is_Empty then
+         return "Any";
+      else
+         return Inner_Image (VS);
+      end if;
+   end Image_Abbreviated;
+
+   ---------------
+   -- Image_Ada --
+   ---------------
+
+   function Image_Ada (VS : Version_Set) return String is
 
       function Inner_Image (VS : Version_Set) return String is
          Cond   : constant Restriction := VS.First_Element;
@@ -37,7 +67,7 @@ package body Semantic_Versioning is
       else
          return Inner_Image (VS);
       end if;
-   end Image;
+   end Image_Ada;
 
    -----------
    -- Parse --
@@ -339,9 +369,10 @@ package body Semantic_Versioning is
       function Remainder (S : String; Pattern : String) return String is
          (S (S'First + Pattern'Length .. S'Last));
 
+      package ACH renames Ada.Characters.Handling;
    begin
       --  Special cases first
-      if S = "any" or else S = "*" then
+      if ACH.To_Lower (S) = "any" or else S = "*" then
          return Any;
       elsif S = "" then
          raise Malformed_Input with "empty string";
