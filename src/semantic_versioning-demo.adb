@@ -37,6 +37,8 @@ begin
 
    -- Ordering
    pragma Assert (V1_0_0_Alpha < V1_0_0);
+   pragma Assert (not (V1_0_0 < V1_0_0_Alpha));
+
    pragma Assert (V1_0_0_Alpha < V1_1_0);
    pragma Assert (V1_0_0_Alpha < V1_Beta);
 

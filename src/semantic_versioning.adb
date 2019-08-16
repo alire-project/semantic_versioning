@@ -247,6 +247,8 @@ package body Semantic_Versioning is
       --  Special case if one of them is not really a pre-release:
       if L /= "" and then R = "" then
          return True;
+      elsif L = "" and then R /= "" then
+         return False;
       end if;
 
       loop
