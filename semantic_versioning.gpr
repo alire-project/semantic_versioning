@@ -4,7 +4,8 @@ project Semantic_Versioning is
    for Object_Dir use "obj";
    for Exec_Dir use "bin";
 
-   for Main use ("semantic_versioning-demo.adb");
+   for Main use ("semantic_versioning-demo.adb",
+                 "semantic_versioning-parser.adb");
 
    package Pretty_Printer is
       for Switches ("ada") use ("--no-separate-is");
@@ -33,4 +34,3 @@ project Semantic_Versioning is
    end Linker;
 
 end Semantic_Versioning;
-
