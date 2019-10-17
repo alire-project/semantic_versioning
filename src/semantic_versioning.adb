@@ -39,7 +39,7 @@ package body Semantic_Versioning is
 
    begin
       if VS.Is_Empty then
-         return "Any";
+         return "=*";
       else
          return Inner_Image (VS);
       end if;
