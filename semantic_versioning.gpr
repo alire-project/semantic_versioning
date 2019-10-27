@@ -17,7 +17,7 @@ project Semantic_Versioning is
    end Builder;
 
    package Compiler is
-      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-p", "-O2", "-gnat12",
+      for Switches ("ada") use ("-gnatVa", "-gnatwa", "-g", "-O2", "-gnat12",
                                 "-gnato", "-fstack-check", "-gnata");
    end Compiler;
 
