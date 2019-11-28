@@ -1,0 +1,19 @@
+Short names
+===========
+V: version (without prefix subsetter)
+VS: version set (version with optional prefix subsetter)
+EVS: extended version set (with and/or ops)
+
+
+Grammar (after LR removal, with precedence mixing forbidden)
+=======
+EVS         ::= (EVS_Nested | VS) [list]
+EVS_Nested  ::= '(' EVS ')'
+VS          ::= V | OP V
+V           ::= <single version terminal>
+list        ::= list_and | list_or
+list_and    ::= '&' EVS_and
+list_or     ::= '|' EVS_or
+EVS_and     ::= (EVS_Nested | VS) [and_list]
+EVS_or      ::= (EVS_Nested | VS) [or_list]
+OP          ::= '<' | '>' etc <comparison operators>

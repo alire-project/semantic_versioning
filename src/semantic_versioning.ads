@@ -90,7 +90,9 @@ package Semantic_Versioning with Preelaborate is
                         Pre_Release,
                         Build : String := "") return Version;
 
-   function To_Set (S : Version_String; Relaxed : Boolean := False) return Version_Set;
+   function To_Set (S       : Version_String;
+                    Relaxed : Boolean := False;
+                    Unicode : Boolean := True) return Version_Set;
    -- Parses a version set from a single restriction representation:
    -- The following operators are recognized:
    --   = /= ≠ > >= ≥ < ≤ <= ~ ^, with the meanings given in the following functions.
@@ -272,5 +274,12 @@ private
                 Unicode,
                 Implicit_Equal) &
         Image (R.On_Version));
+
+   function Begins_With (S : String; Pattern : String) return Boolean;
+
+   function Begins_With_Relational (S       : String;
+                                    Unicode : Boolean := False) return Boolean;
+   --  Checks if S starts with a relational operator, optionally in unicode.
+   --  Includes tilde and caret.
 
 end Semantic_Versioning;
