@@ -1,5 +1,5 @@
 [![Linux CI](https://github.com/alire-project/semantic_versioning/workflows/CI%20linux/badge.svg)](https://github.com/alire-project/semantic_versioning/actions)
-[![Windows CI](https://github.com/alire-project/semantic_versioning/workflows/CI%20windows/badge.svg)](https://github.com/alire-project/semantic_versioning/actions)
+[![Windows CI](https://github.com/alire-project/semantic_versioning/workflows/CI%20Windows/badge.svg)](https://github.com/alire-project/semantic_versioning/actions)
 
 # Semantic_Versioning
 
