@@ -1,0 +1,34 @@
+name: CI Windows
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+
+jobs:
+
+  build:
+    name: CI on Windows
+
+    runs-on: windows-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v1
+
+    - name: Check out submodules
+      run: git submodule update --init --recursive
+
+    - name: Install toolchain
+      uses: Fabien-Chouteau/setup-ada@dev
+      with:
+        distrib: community
+
+    - name: Build
+      run: gprbuild -j0 -p -P semantic_versioning
+      shell: bash
+
+    - name: Test
+      run: bin/demo
+      shell: bash
