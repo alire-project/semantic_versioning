@@ -5,6 +5,27 @@ with Gnat.Case_Util;
 
 package body Semantic_Versioning is
 
+   -----------------
+   -- Begins_With --
+   -----------------
+   --  See if a substring is at the beginning of another, subrange-safe
+   function Begins_With (S : String; Pattern : String) return Boolean is
+        (if Pattern'Length >= S'Length then False -- We need at least one extra character for the actual version
+         else S (S'First .. S'First + Pattern'Length - 1) = Pattern);
+
+   ----------------------------
+   -- Begins_With_Relational --
+   ----------------------------
+
+   function Begins_With_Relational (S       : String;
+                                    Unicode : Boolean := False) return Boolean is
+     ((S'Length >= 1 and then S (S'First) in '<' | '>' | '=' | '/' | '~' | '^')
+       or else
+         (Unicode and then
+            (Begins_With (S, "≠") or else
+             Begins_With (S, "≥") or else
+             Begins_With (S, "≤"))));
+
    -------------------
    -- To_Mixed_Case --
    -------------------
@@ -116,6 +137,10 @@ package body Semantic_Versioning is
          while Last <= Description'Last and then Next_Token (Last) = Number loop
             Last := Last + 1;
          end loop;
+
+         if Next > Description'Last or else Last = Next then
+            raise Malformed_Input with "Empty point number";
+         end if;
 
          return Number : constant Point := Point'Value (Description (Next .. Last - 1)) do
             Next := Last;
@@ -359,13 +384,10 @@ package body Semantic_Versioning is
    -- To_Set --
    ------------
 
-   function To_Set (S : Version_String; Relaxed : Boolean := False) return Version_Set is
+   function To_Set (S       : Version_String;
+                    Relaxed : Boolean := False;
+                    Unicode : Boolean := True) return Version_Set is
       subtype Numbers is Character range '0' .. '9';
-
-      --  See if a substring is at the beginning of another, subrange-safe
-      function Begins_With (S : String; Pattern : String) return Boolean is
-        (if Pattern'Length >= S'Length then False -- We need at least one extra character for the actual version
-         else S (S'First .. S'First + Pattern'Length - 1) = Pattern);
 
       --  Convenience to remove the operator, whatever its length
       function Remainder (S : String; Pattern : String) return String is
@@ -398,15 +420,15 @@ package body Semantic_Versioning is
       --  Rest of cases
       if Begins_With (S, "/=") then
          return Except (Parse (Remainder (S, "/="), Relaxed));
-      elsif Begins_With (S, "≠") then
+      elsif Unicode and then Begins_With (S, "≠") then
          return Except (Parse (Remainder (S, "≠"), Relaxed));
       elsif Begins_With (S, ">=") then
          return At_Least (Parse (Remainder (S, ">="), Relaxed));
-      elsif Begins_With (S, "≥") then
+      elsif Unicode and then Begins_With (S, "≥") then
          return At_Least (Parse (Remainder (S, "≥"), Relaxed));
       elsif Begins_With (S, "<=") then
          return At_most (Parse (Remainder (S, "<="), Relaxed));
-      elsif Begins_With (S, "≤") then
+      elsif Unicode and then Begins_With (S, "≤") then
          return At_Most (Parse (Remainder (S, "≤"), Relaxed));
       elsif Begins_With (S, ">") then
          return More_Than (Parse (Remainder (S, ">"), Relaxed));

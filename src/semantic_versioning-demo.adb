@@ -1,3 +1,5 @@
+with Semantic_Versioning.Extended;
+
 procedure Semantic_Versioning.Demo is
    V1_0_0 : constant Version := New_Version (1);
    V1_1_0 : constant Version := New_Version (1, 1);
@@ -92,4 +94,32 @@ begin
 
    pragma Assert (More_Than (V1_0_0) = To_Set (">1.0.0"));
    pragma Assert (Less_Than (V1_0_0) = To_Set ("<1.0.0"));
+
+   --  Extended set checks
+   pragma Assert (Extended.Is_In (V ("1.0"),
+                  Extended.Value ("1").VS));
+   pragma Assert (Extended.Is_In (V ("1.0"),
+                  Extended.Value ("2|1").VS));
+   pragma Assert (Extended.Is_In (V ("1.1"),
+                  Extended.Value ("2|^1").VS));
+   pragma Assert (not Extended.Is_In (V ("1.1"),
+                  Extended.Value ("^1&/=1.1").VS));
+   pragma Assert (Extended.Is_In (V ("1.2"),
+                  Extended.Value ("^2|/=1.1").VS));
+   pragma Assert (Extended.Is_In (V ("1"),
+                  Extended.Value ("((4-rc))|(^3&~3)|^2+build|=1").VS));
+   pragma Assert (not Extended.Value ("(").Valid);
+   pragma Assert (not Extended.Value ("()").Valid);
+   pragma Assert (not Extended.Value ("(1").Valid);
+   pragma Assert (not Extended.Value ("1&2|3").Valid);
+   pragma Assert (Extended.Value ("1&(2|3)").Valid);
+   pragma Assert (Extended.Value ("((1&(2|3)))").Valid);
+
+   --  Extended + Unicode
+   pragma Assert (Extended.Is_In (V ("1.1"),
+                  Extended.Value ("≠1").VS));
+   pragma Assert (Extended.Is_In (V ("1.1"),
+                  Extended.Value ("≥1").VS));
+   pragma Assert (Extended.Is_In (V ("1.1"),
+                  Extended.Value ("≤1.1").VS));
 end Semantic_Versioning.Demo;
