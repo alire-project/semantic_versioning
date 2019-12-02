@@ -15,8 +15,8 @@ begin
    begin
       if Result.Valid then
          Put_Line ("OK");
-         Put_Line (Image (Result.VS));
-         Put_Line (Synthetic_Image (Result.VS));
+         Put_Line (Image (Result.Set));
+         Put_Line (Synthetic_Image (Result.Set));
       else
          Put_Line ("Parse error: " & Result.Error);
       end if;
