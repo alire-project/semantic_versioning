@@ -1,9 +1,14 @@
+with Ada.Characters.Handling;
 with Ada.Exceptions; use Ada.Exceptions;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNAT.IO; use GNAT.IO;
 
 package body Semantic_Versioning.Extended is
+
+   package ACH renames Ada.Characters.Handling;
+
+   use type Ada.Containers.Count_Type;
 
    Debug : constant Boolean := False;
 
@@ -41,7 +46,7 @@ package body Semantic_Versioning.Extended is
    -- New_Leaf --
    --------------
 
-   function New_Leaf (BVS : Semver.Version_Set;
+   function New_Leaf (BVS : Basic.Version_Set;
                       Img : String) return Version_Set is
       VS : Version_Set;
    begin
@@ -81,6 +86,20 @@ package body Semantic_Versioning.Extended is
       return Link_Tree;
    end New_Pair;
 
+   ---------
+   -- Any --
+   ---------
+
+   function Any return Version_Set is
+      (To_Extended (Basic.Any));
+
+   ---------
+   -- "=" --
+   ---------
+
+   function "=" (L, R : Version_Set) return Boolean is
+      (L.Synthetic_Image = R.Synthetic_Image);
+
    -----------
    -- Is_In --
    -----------
@@ -96,8 +115,9 @@ package body Semantic_Versioning.Extended is
       begin
          case Node.Kind is
             when Leaf =>
-               Trace ("Leaf: " & Image_Abbreviated (Node.Vs) & " " & Is_In (V, Node.VS)'Img);
-               return Is_In (V, Node.VS);
+               Trace ("Leaf: " & Basic.Image_Abbreviated (Node.Vs)
+                      & " " & Basic.Is_In (V, Node.VS)'Img);
+               return Basic.Is_In (V, Node.VS);
 
             when Anded =>
                return OK : Boolean := True do
@@ -127,6 +147,15 @@ package body Semantic_Versioning.Extended is
       end if;
    end Is_In;
 
+   -----------------------
+   -- Is_Single_Version --
+   -----------------------
+
+   function Is_Single_Version (VS : Version_Set) return Boolean is
+     (Trees.Child_Count (VS.Set.Root) = 1
+      and then Trees.Element (Root_Cursor (VS)).Kind = Leaf
+      and then Basic.Is_Single_Version (Trees.Element (Root_Cursor (VS)).VS));
+
    -----------
    -- Image --
    -----------
@@ -138,7 +167,8 @@ package body Semantic_Versioning.Extended is
    -- Synthetic_Image --
    ---------------------
 
-   function Synthetic_Image (VS : Version_Set) return String is
+   function Synthetic_Image (VS      : Version_Set;
+                             Unicode : Boolean := False) return String is
 
       function Img (Pos : Trees.Cursor) return String is
          Node : Any_Node renames Trees.Element (Pos);
@@ -170,7 +200,8 @@ package body Semantic_Versioning.Extended is
       begin
          case Node.Kind is
             when Leaf =>
-               return Image_Abbreviated (Node.VS);
+               return Basic.Image_Abbreviated (Node.VS,
+                                               Unicode => Unicode);
 
             when Anded | Ored =>
                return List_Img;
@@ -184,6 +215,14 @@ package body Semantic_Versioning.Extended is
          return Img (Trees.First_Child (VS.Set.Root));
       end if;
    end Synthetic_Image;
+
+   -----------------
+   -- To_Extended --
+   -----------------
+
+   function To_Extended (BVS : Basic.Version_Set)
+                         return Version_Set is
+     (New_Leaf (BVS, Basic.Image_Abbreviated (BVS)));
 
    -----------
    -- Value --
@@ -419,9 +458,9 @@ package body Semantic_Versioning.Extended is
          BVS_Image : constant String := Next_Basic_VS;
       begin
          Trace ("Prod VS");
-            return New_Leaf (To_Set (S       => BVS_Image,
-                                     Relaxed => Relaxed,
-                                     Unicode => Unicode), BVS_Image);
+         return New_Leaf (Basic.To_Set (S       => BVS_Image,
+                                        Relaxed => Relaxed,
+                                        Unicode => Unicode), BVS_Image);
       exception
          when Malformed_Input =>
             Error ("Malformed basic version set: " & BVS_Image);
@@ -429,11 +468,16 @@ package body Semantic_Versioning.Extended is
       end Prod_VS;
 
    begin
+      --  Special cases first
+      if ACH.To_Lower (Str) = "any" or else Str = "*" then
+         return New_Valid_Result (To_Extended (Basic.Any));
+      end if;
+
       return Set : Result := New_Valid_Result (Prod_EVS (Any)) do
          if Next_Token /= End_Of_Input then
             Error ("Unexpected input after parsing version set: " & Str (I));
          else
-            Set.VS.Image := To_Unbounded_String (Str);
+            Set.Set.Image := To_Unbounded_String (Str);
          end if;
       end return;
    exception

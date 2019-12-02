@@ -1,15 +1,21 @@
 with Ada.Containers.Multiway_Trees;
 with Ada.Strings.Unbounded;
 
+with Semantic_Versioning.Basic;
+
 package Semantic_Versioning.Extended with Preelaborate is
 
    type Version_Set is tagged private;
+
+   function Any return Version_Set;
+
+   function "=" (L, R : Version_Set) return Boolean;
 
    type Result (Valid : Boolean;
                 Len   : Natural) is record
       case Valid is
          when True =>
-            VS : Version_Set;
+            Set : Version_Set;
          when False =>
             Error : String (1 .. Len);
       end case;
@@ -17,8 +23,14 @@ package Semantic_Versioning.Extended with Preelaborate is
 
    function Is_In (V : Version; VS : Version_Set) return Boolean;
 
+   function Is_Single_Version (VS : Version_Set) return Boolean;
+   --  Says if this VS encapsulates a single "=x.y.z" condition
+
    function Contains (VS : Version_Set; V : Version) return Boolean is
       (Is_In (V, VS));
+
+   function To_Extended (BVS : Basic.Version_Set)
+                         return Version_Set;
 
    function Value (Str     : String;
                    Relaxed : Boolean := False;
@@ -31,7 +43,8 @@ package Semantic_Versioning.Extended with Preelaborate is
    function Image (VS : Version_Set) return String;
    --  Original image, as given to Value
 
-   function Synthetic_Image (VS : Version_Set) return String;
+   function Synthetic_Image (VS      : Version_Set;
+                             Unicode : Boolean := False) return String;
    --  Reconstructed normalized image
 
 private
@@ -48,7 +61,7 @@ private
    type Any_Node (Kind : Kinds := Leaf) is record
       case Kind is
          when Leaf =>
-            VS : Semantic_Versioning.Version_Set;
+            VS : Basic.Version_Set;
          when others =>
             null;
       end case;
@@ -63,8 +76,12 @@ private
 
    --  For internal use:
 
+   ----------------------
+   -- New_Valid_Result --
+   ----------------------
+
    function New_Valid_Result (VS : Version_Set) return Result is
-     (Valid => True, Len => 0, VS => VS);
+     (Valid => True, Len => 0, Set => VS);
 
    Empty_Set : constant Version_Set := (others => <>);
 

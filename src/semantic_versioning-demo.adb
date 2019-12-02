@@ -1,5 +1,6 @@
 with GNAT.IO; use GNAT.IO;
 
+with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
 
 procedure Semantic_Versioning.Demo is
@@ -10,7 +11,9 @@ procedure Semantic_Versioning.Demo is
    V1_0_0_Alpha_Img : constant String := "1.0.0-alpha";
 
    V1_0_0_Alpha : constant Version := New_Version (V1_0_0_Alpha_Img);
-   V1_Beta      : constant Version := New_Version("1-beta+6699dd338e");
+   V1_Beta      : constant Version := New_Version ("1-beta+6699dd338e");
+
+   use Basic;
 begin
    -- Builder
    pragma Assert (New_Version (1, 2, 3) = New_Version ("1.2.3"));
@@ -99,17 +102,17 @@ begin
 
    --  Extended set checks
    pragma Assert (Extended.Is_In (V ("1.0"),
-                  Extended.Value ("1").VS));
+                  Extended.Value ("1").Set));
    pragma Assert (Extended.Is_In (V ("1.0"),
-                  Extended.Value ("2|1").VS));
+                  Extended.Value ("2|1").Set));
    pragma Assert (Extended.Is_In (V ("1.1"),
-                  Extended.Value ("2|^1").VS));
+                  Extended.Value ("2|^1").Set));
    pragma Assert (not Extended.Is_In (V ("1.1"),
-                  Extended.Value ("^1&/=1.1").VS));
+                  Extended.Value ("^1&/=1.1").Set));
    pragma Assert (Extended.Is_In (V ("1.2"),
-                  Extended.Value ("^2|/=1.1").VS));
+                  Extended.Value ("^2|/=1.1").Set));
    pragma Assert (Extended.Is_In (V ("1"),
-                  Extended.Value ("((4-rc))|(^3&~3)|^2+build|=1").VS));
+                  Extended.Value ("((4-rc))|(^3&~3)|^2+build|=1").Set));
    pragma Assert (not Extended.Value ("(").Valid);
    pragma Assert (not Extended.Value ("()").Valid);
    pragma Assert (not Extended.Value ("(1").Valid);
@@ -119,11 +122,11 @@ begin
 
    --  Extended + Unicode
    pragma Assert (Extended.Is_In (V ("1.1"),
-                  Extended.Value ("≠1").VS));
+                  Extended.Value ("≠1").Set));
    pragma Assert (Extended.Is_In (V ("1.1"),
-                  Extended.Value ("≥1").VS));
+                  Extended.Value ("≥1").Set));
    pragma Assert (Extended.Is_In (V ("1.1"),
-                  Extended.Value ("≤1.1").VS));
+                  Extended.Value ("≤1.1").Set));
 
    Put_Line ("OK");
 end Semantic_Versioning.Demo;
