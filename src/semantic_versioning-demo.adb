@@ -1,3 +1,5 @@
+with GNAT.IO; use GNAT.IO;
+
 with Semantic_Versioning.Extended;
 
 procedure Semantic_Versioning.Demo is
@@ -122,4 +124,6 @@ begin
                   Extended.Value ("≥1").VS));
    pragma Assert (Extended.Is_In (V ("1.1"),
                   Extended.Value ("≤1.1").VS));
+
+   Put_Line ("OK");
 end Semantic_Versioning.Demo;
