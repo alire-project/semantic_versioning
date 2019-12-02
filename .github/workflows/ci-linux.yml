@@ -9,7 +9,7 @@ on:
 jobs:
 
   build:
-    name: CI on ${{ matrix.tag }}
+    name: ${{ matrix.tag }}
  
     runs-on: ubuntu-latest
     

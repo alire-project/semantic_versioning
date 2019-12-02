@@ -9,7 +9,7 @@ on:
 jobs:
 
   build:
-    name: CI on Windows
+    name: Community
 
     runs-on: windows-latest
 
