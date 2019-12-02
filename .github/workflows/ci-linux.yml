@@ -1,0 +1,43 @@
+name: CI linux
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+
+jobs:
+
+  build:
+    name: CI on ${{ matrix.tag }}
+ 
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        tag: # Those are our dockerhub alire/gnat:tag machines
+            - centos-latest-community-2019
+            - community-current
+            - debian-stable
+            - ubuntu-lts
+ 
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v1
+
+    - name: Check out submodules
+      run: git submodule update --init --recursive
+
+    - name: Pull docker image
+      run: docker pull alire/gnat:${{ matrix.tag }}
+
+    - name: Build
+      run: >
+        docker run -v${PWD}:/work -w /work
+        -e "BRANCH=${{ github.base_ref }}" -e "INDEX=${{ env.alire_index }}" 
+        alire/gnat:${{ matrix.tag }} gprbuild -j0 -P semantic_versioning
+
+    - name: Run test program
+      run: >
+        docker run -v${PWD}:/work -w /work
+        -e "BRANCH=${{ github.base_ref }}" -e "INDEX=${{ env.alire_index }}" 
+        alire/gnat:${{ matrix.tag }} bin/demo
