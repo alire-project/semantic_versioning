@@ -137,16 +137,6 @@ private
 
    function "and" (VS1, VS2 : Version_Set) return Version_Set is (VS1 & VS2);
 
-   function Image (P : Point) return String is
-      (Ada.Strings.Fixed.Trim (P'Img, Ada.Strings.Both));
-
-   function Image (V : Version) return Version_String is
-     (Image (V.Major) & "." &
-      Image (V.Minor) & "." &
-      Image (V.Patch) &
-      (if V.Pre_Release /= "" then "-" & Ustrings.To_String (V.Pre_Release) else "") &
-      (if V.Build /= "" then "+" & Ustrings.To_String (V.Build) else ""));
-
    function Length  (VS : Version_Set) return Natural is
      (Natural (Restrictions.Vector (VS).Length));
 

@@ -109,6 +109,10 @@ begin
    pragma Assert (not B.Parse ("/= 1").Valid); -- Because space
    pragma Assert (not B.Parse ("<1|>2").Valid); -- Because |
    pragma Assert (not B.Parse ("<1 | >2").Valid); -- Because |
+   pragma Assert (not B.Parse ("&1").Valid);
+   pragma Assert (not B.Parse ("&").Valid);
+   pragma Assert (B.Value ("*").Image = B.Any.Image);
+   pragma Assert (B.Value ("*").Image = B.Value ("any").Image);
 
    --  Extended expressions
    pragma Assert (X.Is_In (V ("1.0"), X.Value ("1")));
@@ -121,8 +125,12 @@ begin
    pragma Assert (not X.Parse ("()").Valid);
    pragma Assert (not X.Parse ("(1").Valid);
    pragma Assert (not X.Parse ("1&2|3").Valid);
+   pragma Assert (not X.Parse ("&1").Valid);
+   pragma Assert (not X.Parse ("&").Valid);
    pragma Assert (X.Parse ("1&(2|3)").Valid);
    pragma Assert (X.Parse ("((1&(2|3)))").Valid);
+   pragma Assert (X.Value ("*").Image = X.Any.Image);
+   pragma Assert (X.Value ("*").Image = X.Value ("any").Image);
 
    --  X + Unicode
    pragma Assert (X.Is_In (V ("1.1"), X.Value ("≠1")));

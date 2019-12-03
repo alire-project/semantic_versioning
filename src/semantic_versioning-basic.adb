@@ -42,7 +42,7 @@ package body Semantic_Versioning.Basic is
 
    begin
       if VS.Is_Empty then
-         return "=*";
+         return "*";
       else
          return Inner_Image (VS);
       end if;
@@ -95,12 +95,22 @@ package body Semantic_Versioning.Basic is
                    Relaxed : Boolean := False;
                    Unicode : Boolean := True) return Result
    is
+      use Ada.Strings;
+      use Ada.Strings.Fixed;
+
       Err_Empty : constant String := "Expression is empty";
 
       Prev : Integer := S'First;
       Next : Integer := Prev + 1;
       Set  : Version_Set;
    begin
+      --  Check for emptiness first:
+      if Trim (S, Side => Both) = "" then
+         return Result'(Valid  => False,
+                        Length => Err_Empty'Length,
+                        Error  => Err_Empty);
+      end if;
+
       loop
          while Next <= S'Last and then S (Next) /= Separator loop
             Next := Next + 1;
@@ -109,8 +119,6 @@ package body Semantic_Versioning.Basic is
          exit when Prev > S'Last;
 
          declare
-            use Ada.Strings;
-            use Ada.Strings.Fixed;
             Single_Set : constant Version_Set :=
                            To_Set (Trim (S (Prev .. Next - 1), Side => Both),
                                    Relaxed => Relaxed,
@@ -118,19 +126,13 @@ package body Semantic_Versioning.Basic is
          begin
             Prev := Next + 1;
             Next := Prev + 1;
-            Set.Append (Single_Set.First_Element);
+            Set := Set and Single_Set;
          end;
       end loop;
 
-      if Set.Is_Empty then
-         return Result'(Valid  => False,
-                        Length => Err_Empty'Length,
-                        Error  => Err_Empty);
-      else
-         return Result'(Valid  => True,
-                        Length => 0,
-                        Set    => Set);
-      end if;
+      return Result'(Valid  => True,
+                     Length => 0,
+                     Set    => Set);
    exception
       when E : others =>
          declare
