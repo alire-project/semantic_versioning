@@ -14,6 +14,8 @@ procedure Semantic_Versioning.Demo is
    V1_Beta      : constant Version := New_Version ("1-beta+6699dd338e");
 
    use Basic;
+   use all type Extended.Version_Set;
+   package X renames Extended;
 begin
    -- Builder
    pragma Assert (New_Version (1, 2, 3) = New_Version ("1.2.3"));
@@ -82,8 +84,8 @@ begin
    pragma Assert (V ("1.0.0") /= V ("1.0.0-prerelease"));
 
    -- To Set from string
-   pragma Assert (Any = To_Set ("any"));
-   pragma Assert (Any = To_Set ("*"));
+   pragma Assert (Basic.Any = To_Set ("any"));
+   pragma Assert (Basic.Any = To_Set ("*"));
 
    pragma Assert (Exactly (V1_0_0) = To_Set ("1.0.0"));
    pragma Assert (Exactly (V1_0_0) = To_Set ("=1.0.0"));
@@ -101,32 +103,27 @@ begin
    pragma Assert (Less_Than (V1_0_0) = To_Set ("<1.0.0"));
 
    --  Extended set checks
-   pragma Assert (Extended.Is_In (V ("1.0"),
-                  Extended.Value ("1").Set));
-   pragma Assert (Extended.Is_In (V ("1.0"),
-                  Extended.Value ("2|1").Set));
-   pragma Assert (Extended.Is_In (V ("1.1"),
-                  Extended.Value ("2|^1").Set));
-   pragma Assert (not Extended.Is_In (V ("1.1"),
-                  Extended.Value ("^1&/=1.1").Set));
-   pragma Assert (Extended.Is_In (V ("1.2"),
-                  Extended.Value ("^2|/=1.1").Set));
-   pragma Assert (Extended.Is_In (V ("1"),
-                  Extended.Value ("((4-rc))|(^3&~3)|^2+build|=1").Set));
-   pragma Assert (not Extended.Value ("(").Valid);
-   pragma Assert (not Extended.Value ("()").Valid);
-   pragma Assert (not Extended.Value ("(1").Valid);
-   pragma Assert (not Extended.Value ("1&2|3").Valid);
-   pragma Assert (Extended.Value ("1&(2|3)").Valid);
-   pragma Assert (Extended.Value ("((1&(2|3)))").Valid);
+   pragma Assert (X.Is_In (V ("1.0"), X.Value ("1")));
+   pragma Assert (X.Is_In (V ("1.0"), X.Value ("2|1")));
+   pragma Assert (X.Is_In (V ("1.1"), X.Value ("2|^1")));
+   pragma Assert (not X.Is_In (V ("1.1"), X.Value ("^1&/=1.1")));
+   pragma Assert (X.Is_In (V ("1.2"), X.Value ("^2|/=1.1")));
+   pragma Assert (X.Is_In (V ("1"), X.Value ("((4-rc))|(^3&~3)|^2+build|=1")));
+   pragma Assert (not X.Parse ("(").Valid);
+   pragma Assert (not X.Parse ("()").Valid);
+   pragma Assert (not X.Parse ("(1").Valid);
+   pragma Assert (not X.Parse ("1&2|3").Valid);
+   pragma Assert (X.Parse ("1&(2|3)").Valid);
+   pragma Assert (X.Parse ("((1&(2|3)))").Valid);
 
-   --  Extended + Unicode
-   pragma Assert (Extended.Is_In (V ("1.1"),
-                  Extended.Value ("≠1").Set));
-   pragma Assert (Extended.Is_In (V ("1.1"),
-                  Extended.Value ("≥1").Set));
-   pragma Assert (Extended.Is_In (V ("1.1"),
-                  Extended.Value ("≤1.1").Set));
+   --  X + Unicode
+   pragma Assert (X.Is_In (V ("1.1"), X.Value ("≠1")));
+   pragma Assert (X.Is_In (V ("1.1"), X.Value ("≥1")));
+   pragma Assert (X.Is_In (V ("1.1"), X.Value ("≤1.1")));
+
+   --  Extended operators
+   pragma Assert (((X.Value (">=1") and X.Value ("<2")) or X.Value ("=3")) =
+                    X.Value ("(>=1 & <2)|=3"));
 
    Put_Line ("OK");
 end Semantic_Versioning.Demo;

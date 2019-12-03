@@ -16,9 +16,14 @@ package Semantic_Versioning.Basic with Preelaborate is
    function Image_Abbreviated (VS             : Version_Set;
                                Unicode        : Boolean := False;
                                Implicit_Equal : Boolean := False) return String;
-   --  Comma separated; e.g. "^1.0.0,≠1.0.5"
+   --  '&' separated; e.g. "^1.0.0 & ≠1.0.5"
    --  If Unicode, the operator can be ≠, etc
    --  If implicit equal, "=" will be omitted
+
+   function Image (VS             : Version_Set;
+                   Unicode        : Boolean := False;
+                   Implicit_Equal : Boolean := False) return String
+                   renames Image_Abbreviated;
 
    function To_Set (S       : Version_String;
                     Relaxed : Boolean := False;

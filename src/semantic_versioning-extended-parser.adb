@@ -11,7 +11,7 @@ begin
    end if;
 
    declare
-      Result : constant Extended.Result := Extended.Value (Argument (1));
+      Result : constant Extended.Result := Extended.Parse (Argument (1));
    begin
       if Result.Valid then
          Put_Line ("OK");

@@ -32,7 +32,7 @@ package body Semantic_Versioning.Basic is
 
          return Operator_Image (Cond, Unicode, Implicit_Equal) &
          (if VS.Length > Natural'(1)
-          then "," & Inner_Image (Remain)
+          then " & " & Inner_Image (Remain)
           else "");
       end Inner_Image;
 

@@ -81,7 +81,10 @@ package body Semantic_Versioning.Extended is
       Link_Tree.Set.Copy_Subtree (Parent => Link_Pos,
                                   Before => Trees.No_Element,
                                   Source => Root_Cursor (R));
-      Link_tree.Image := L.Image & Concrete_Images (Kind) & R.Image;
+      Link_tree.Image :=
+        "(" & L.Image & ") "
+        & Concrete_Images (Kind)
+        & " (" & R.Image & ")";
 
       return Link_Tree;
    end New_Pair;
@@ -98,7 +101,21 @@ package body Semantic_Versioning.Extended is
    ---------
 
    function "=" (L, R : Version_Set) return Boolean is
-      (L.Synthetic_Image = R.Synthetic_Image);
+     (L.Synthetic_Image = R.Synthetic_Image);
+
+   -----------
+   -- "and" --
+   -----------
+
+   function "and" (L, R : Version_Set) return Version_Set is
+      (New_Pair (L, R, Anded));
+
+   ----------
+   -- "or" --
+   ----------
+
+   function "or" (L, R : Version_Set) return Version_Set is
+      (New_Pair (L, R, Ored));
 
    -----------
    -- Is_In --
@@ -225,10 +242,10 @@ package body Semantic_Versioning.Extended is
      (New_Leaf (BVS, Basic.Image_Abbreviated (BVS)));
 
    -----------
-   -- Value --
+   -- Parse --
    -----------
 
-   function Value (Str     : String;
+   function Parse (Str     : String;
                    Relaxed : Boolean := False;
                    Unicode : Boolean := True) return Result is
 
@@ -489,6 +506,25 @@ package body Semantic_Versioning.Extended is
          return (Valid => False,
                  Len   => Length (Err),
                  Error => To_String (Err));
+   end Parse;
+
+   -----------
+   -- Value --
+   -----------
+
+   function Value (Str     : String;
+                   Relaxed : Boolean := False;
+                   Unicode : Boolean := True) return Version_Set
+   is
+      R : constant Result := Parse (Str     => Str,
+                                    Relaxed => Relaxed,
+                                    Unicode => Unicode);
+   begin
+      if R.Valid then
+         return R.Set;
+      else
+         raise Malformed_Input with R.Error;
+      end if;
    end Value;
 
 end Semantic_Versioning.Extended;
