@@ -11,15 +11,21 @@ package Semantic_Versioning.Extended with Preelaborate is
 
    function "=" (L, R : Version_Set) return Boolean;
 
-   type Result (Valid : Boolean;
-                Len   : Natural) is record
+   type Result (Valid  : Boolean;
+                Length : Natural) is record
       case Valid is
          when True =>
             Set : Version_Set;
          when False =>
-            Error : String (1 .. Len);
+            Error : String (1 .. Length);
       end case;
    end record;
+
+   function "and" (L, R : Version_Set) return Version_Set;
+   --  Creates a new tree that is (L) & (R).
+
+   function "or" (L, R : Version_Set) return Version_Set;
+   --  Creates a new tree that is (L) | (R).
 
    function Is_In (V : Version; VS : Version_Set) return Boolean;
 
@@ -32,13 +38,19 @@ package Semantic_Versioning.Extended with Preelaborate is
    function To_Extended (BVS : Basic.Version_Set)
                          return Version_Set;
 
-   function Value (Str     : String;
+   function Parse (Str     : String;
                    Relaxed : Boolean := False;
                    Unicode : Boolean := True) return Result;
    --  Parse a string and return an extended version set or an error message
    --  pinpointing the error.
    --  If Unicode, plain and unicode sequences are both accepted.
    --  Relaxed is passed to Semantic_Versioning.To_Set for set conditions.
+
+   function Value (Str     : String;
+                   Relaxed : Boolean := False;
+                   Unicode : Boolean := True) return Version_Set;
+   --  This version will raise Malformed_Input with the corresponding error as
+   --  message, instead of returning a Result.
 
    function Image (VS : Version_Set) return String;
    --  Original image, as given to Value
@@ -81,7 +93,7 @@ private
    ----------------------
 
    function New_Valid_Result (VS : Version_Set) return Result is
-     (Valid => True, Len => 0, Set => VS);
+     (Valid => True, Length => 0, Set => VS);
 
    Empty_Set : constant Version_Set := (others => <>);
 

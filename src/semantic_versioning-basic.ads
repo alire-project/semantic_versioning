@@ -7,6 +7,15 @@ package Semantic_Versioning.Basic with Preelaborate is
 
    type Version_Set is tagged private;
 
+   type Result (Valid  : Boolean;
+                Length : Natural) is
+      record
+         case Valid is
+            when True  => Set   : Version_Set;
+            when False => Error : String (1 .. Length);
+         end case;
+      end record;
+
    Any : constant Version_Set;
 
    function Image_Ada (VS : Version_Set) return String;
@@ -16,17 +25,33 @@ package Semantic_Versioning.Basic with Preelaborate is
    function Image_Abbreviated (VS             : Version_Set;
                                Unicode        : Boolean := False;
                                Implicit_Equal : Boolean := False) return String;
-   --  Comma separated; e.g. "^1.0.0,≠1.0.5"
+   --  '&' separated; e.g. "^1.0.0 & ≠1.0.5"
    --  If Unicode, the operator can be ≠, etc
    --  If implicit equal, "=" will be omitted
+
+   function Image (VS             : Version_Set;
+                   Unicode        : Boolean := False;
+                   Implicit_Equal : Boolean := False) return String
+                   renames Image_Abbreviated;
 
    function To_Set (S       : Version_String;
                     Relaxed : Boolean := False;
                     Unicode : Boolean := True) return Version_Set;
-   -- Parses a version set from a single restriction representation:
+   -- Parses a single version set from a single restriction representation:
    -- The following operators are recognized:
    --   = /= ≠ > >= ≥ < ≤ <= ~ ^, with the meanings given in the following functions.
    -- In addition, a plain version is equivalent to =, and "any", "*" is any version.
+
+   function Parse (S       : String;
+                   Relaxed : Boolean := False;
+                   Unicode : Boolean := True) return Result;
+   --  Parse an expression possibly containing several sets, "&"-separated.
+
+   function Value (S       : String;
+                   Relaxed : Boolean := False;
+                   Unicode : Boolean := True) return Version_Set;
+   --  As Parse, but raises Malformed_Error with Error as message instead of
+   --  returning a Result.
 
    function At_Least  (V : Version) return Version_Set; -- >= ≥
    function At_Most   (V : Version) return Version_Set; -- <= ≤
