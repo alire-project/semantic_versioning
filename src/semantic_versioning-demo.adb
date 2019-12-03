@@ -15,6 +15,7 @@ procedure Semantic_Versioning.Demo is
 
    use Basic;
    use all type Extended.Version_Set;
+   package B renames Basic;
    package X renames Extended;
 begin
    -- Builder
@@ -102,7 +103,14 @@ begin
    pragma Assert (More_Than (V1_0_0) = To_Set (">1.0.0"));
    pragma Assert (Less_Than (V1_0_0) = To_Set ("<1.0.0"));
 
-   --  Extended set checks
+   -- Basic expressions
+   pragma Assert (B.Is_In (V ("1.0"), B.Value ("^1 & <2")));
+   pragma Assert (not B.Is_In (V ("1.1"), B.Value ("^1 & <2 & /=1.1")));
+   pragma Assert (not B.Parse ("/= 1").Valid); -- Because space
+   pragma Assert (not B.Parse ("<1|>2").Valid); -- Because |
+   pragma Assert (not B.Parse ("<1 | >2").Valid); -- Because |
+
+   --  Extended expressions
    pragma Assert (X.Is_In (V ("1.0"), X.Value ("1")));
    pragma Assert (X.Is_In (V ("1.0"), X.Value ("2|1")));
    pragma Assert (X.Is_In (V ("1.1"), X.Value ("2|^1")));

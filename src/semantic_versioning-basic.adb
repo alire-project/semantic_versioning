@@ -1,8 +1,12 @@
 with Ada.Characters.Handling;
+with Ada.Exceptions;
+with Ada.Strings.Fixed;
 
-with Gnat.Case_Util;
+with GNAT.Case_Util;
 
 package body Semantic_Versioning.Basic is
+
+   Separator : constant Character := '&';
 
    -------------------
    -- To_Mixed_Case --
@@ -32,7 +36,7 @@ package body Semantic_Versioning.Basic is
 
          return Operator_Image (Cond, Unicode, Implicit_Equal) &
          (if VS.Length > Natural'(1)
-          then " & " & Inner_Image (Remain)
+          then " " & Separator & " " & Inner_Image (Remain)
           else "");
       end Inner_Image;
 
@@ -82,6 +86,61 @@ package body Semantic_Versioning.Basic is
 
       return True;
    end Is_In;
+
+   -----------
+   -- Parse --
+   -----------
+
+   function Parse (S       : String;
+                   Relaxed : Boolean := False;
+                   Unicode : Boolean := True) return Result
+   is
+      Err_Empty : constant String := "Expression is empty";
+
+      Prev : Integer := S'First;
+      Next : Integer := Prev + 1;
+      Set  : Version_Set;
+   begin
+      loop
+         while Next <= S'Last and then S (Next) /= Separator loop
+            Next := Next + 1;
+         end loop;
+
+         exit when Prev > S'Last;
+
+         declare
+            use Ada.Strings;
+            use Ada.Strings.Fixed;
+            Single_Set : constant Version_Set :=
+                           To_Set (Trim (S (Prev .. Next - 1), Side => Both),
+                                   Relaxed => Relaxed,
+                                   Unicode => Unicode);
+         begin
+            Prev := Next + 1;
+            Next := Prev + 1;
+            Set.Append (Single_Set.First_Element);
+         end;
+      end loop;
+
+      if Set.Is_Empty then
+         return Result'(Valid  => False,
+                        Length => Err_Empty'Length,
+                        Error  => Err_Empty);
+      else
+         return Result'(Valid  => True,
+                        Length => 0,
+                        Set    => Set);
+      end if;
+   exception
+      when E : others =>
+         declare
+            Error : constant String := Ada.Exceptions.Exception_Message (E);
+         begin
+            return Result'(Valid  => False,
+                           Length => Error'Length,
+                           Error  => Error);
+         end;
+   end Parse;
 
    ---------------
    -- Satisfies --
@@ -166,4 +225,22 @@ package body Semantic_Versioning.Basic is
       raise Malformed_Input with "invalid set: " & S;
    end To_Set;
 
+   -----------
+   -- Value --
+   -----------
+
+   function Value (S       : String;
+                   Relaxed : Boolean := False;
+                   Unicode : Boolean := True) return Version_Set
+   is
+      R : constant Result := Parse (S,
+                                    Relaxed => Relaxed,
+                                    Unicode => Unicode);
+   begin
+      if R.Valid then
+         return R.Set;
+      else
+         raise Malformed_Input with R.Error;
+      end if;
+   end Value;
 end Semantic_Versioning.Basic;

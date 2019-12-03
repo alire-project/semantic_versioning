@@ -11,13 +11,13 @@ package Semantic_Versioning.Extended with Preelaborate is
 
    function "=" (L, R : Version_Set) return Boolean;
 
-   type Result (Valid : Boolean;
-                Len   : Natural) is record
+   type Result (Valid  : Boolean;
+                Length : Natural) is record
       case Valid is
          when True =>
             Set : Version_Set;
          when False =>
-            Error : String (1 .. Len);
+            Error : String (1 .. Length);
       end case;
    end record;
 
@@ -93,7 +93,7 @@ private
    ----------------------
 
    function New_Valid_Result (VS : Version_Set) return Result is
-     (Valid => True, Len => 0, Set => VS);
+     (Valid => True, Length => 0, Set => VS);
 
    Empty_Set : constant Version_Set := (others => <>);
 

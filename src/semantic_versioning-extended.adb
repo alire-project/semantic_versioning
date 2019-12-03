@@ -503,9 +503,9 @@ package body Semantic_Versioning.Extended is
             Put_Line (Exception_Information (E));
          end if;
 
-         return (Valid => False,
-                 Len   => Length (Err),
-                 Error => To_String (Err));
+         return (Valid  => False,
+                 Length => Length (Err),
+                 Error  => To_String (Err));
    end Parse;
 
    -----------
