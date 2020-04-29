@@ -2,6 +2,9 @@ private with Ada.Strings;
 private with Ada.Strings.Fixed;
 private with Ada.Strings.Unbounded;
 
+limited with Semantic_Versioning.Basic;
+limited with Semantic_Versioning.Extended;
+
 package Semantic_Versioning with Preelaborate is
 
    Malformed_Input : exception;
@@ -73,6 +76,13 @@ package Semantic_Versioning with Preelaborate is
    function Next_Major (V : Version;
                         Pre_Release,
                         Build : String := "") return Version;
+
+   --  For convenience, the following conversion functions are made available
+   --  in this top-level package:
+
+   function To_Basic    (V  : Version) return Basic.Version_Set;
+   function To_Extended (V  : Version) return Extended.Version_Set;
+   function To_Extended (VS : Basic.Version_Set) return Extended.Version_Set;
 
 private
 
