@@ -1,5 +1,8 @@
 with Ada.Strings.Maps;
 
+with Semantic_Versioning.Basic;
+with Semantic_Versioning.Extended;
+
 package body Semantic_Versioning is
 
    -----------------
@@ -274,5 +277,26 @@ package body Semantic_Versioning is
 
       return False; -- In all other cases
    end "<";
+
+   --------------
+   -- To_Basic --
+   --------------
+
+   function To_Basic    (V  : Version) return Basic.Version_Set is
+     (Basic.Exactly (V));
+
+   -----------------
+   -- To_Extended --
+   -----------------
+
+   function To_Extended (V  : Version) return Extended.Version_Set is
+     (Extended.To_Extended (To_Basic (V)));
+
+   -----------------
+   -- To_Extended --
+   -----------------
+
+   function To_Extended (VS : Basic.Version_Set) return Extended.Version_Set is
+     (Extended.To_Extended (VS));
 
 end Semantic_Versioning;
