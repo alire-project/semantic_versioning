@@ -1,7 +1,10 @@
+with Semantic_Versioning.Basic;
+
 generic
    type LH (<>) is private;
    type Result (<>) is private;
-   with function Build_Condition (L : LH; VS : Version_Set) return Result;
+   with function Build_Condition (L  : LH;
+                                  VS : Basic.Version_Set) return Result;
    Strict : Boolean := False; -- When parsing strings
 package Semantic_Versioning.Expressions with Preelaborate is
 
@@ -52,8 +55,9 @@ package Semantic_Versioning.Expressions with Preelaborate is
 
    end Against;
 
-
 private
+
+   use Basic;
 
    function "<" (L : LH; R : Version) return Result is (Build_Condition (L, Less_Than (R)));
    function "<" (L : LH; R : String)  return Result is (L < Parse (R, not Strict));
