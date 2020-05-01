@@ -1,4 +1,4 @@
-[![build](https://github.com/alire-project/semantic_versioning/workflows/build.yml/badge.svg)](https://github.com/alire-project/semantic_versioning/actions)
+[![build](https://github.com/alire-project/semantic_versioning/workflows/build/badge.svg)](https://github.com/alire-project/semantic_versioning/actions)
 
 # Semantic_Versioning
 
