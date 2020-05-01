@@ -11,7 +11,7 @@ jobs:
   build:
     name: ${{ matrix.os }}
  
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     
     strategy:
       matrix:
