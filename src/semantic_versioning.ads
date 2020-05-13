@@ -20,7 +20,7 @@ package Semantic_Versioning with Preelaborate is
    subtype Version_String is String
      with Dynamic_Predicate => (for all S of Version_String => S /= ' ');
 
-   type Version is private;
+   type Version is tagged private;
    --  A version is a major, minor and patch number
    --  Optionally it may include pre-release name and build metadata, e.g.:
    --  1.2.0-alpha+c3423fab
@@ -90,7 +90,7 @@ private
    subtype UString is UStrings.Unbounded_String;
    use all type UString;
 
-   type Version is record
+   type Version is tagged record
       Major,
       Minor,
       Patch : Point := 0;
