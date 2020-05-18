@@ -1,6 +1,5 @@
 with Ada.Characters.Handling;
 with Ada.Exceptions; use Ada.Exceptions;
-with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 
 with GNAT.IO; use GNAT.IO;
 
