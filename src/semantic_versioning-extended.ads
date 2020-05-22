@@ -22,10 +22,15 @@ package Semantic_Versioning.Extended with Preelaborate is
    end record;
 
    function "and" (L, R : Version_Set) return Version_Set;
-   --  Creates a new tree that is (L) & (R).
+   --  Creates a new tree that is Simplify ((L) & (R)).
 
    function "or" (L, R : Version_Set) return Version_Set;
-   --  Creates a new tree that is (L) | (R).
+   --  Creates a new tree that is Simplify ((L) | (R)).
+
+   function Simplify (VS : Version_Set) return Version_Set;
+   --  Apply trivial and/or simplifications to the set: "* & =1.0" --> "=1.0",
+   --  "* | =1.0" --> "*", "=1.0 & =1.0" --> "=1.0"... Won't be clever enough
+   --  to simplify "^1.0 & ^1.1" --> "^1.1" and similar.
 
    function Is_In (V : Version; VS : Version_Set) return Boolean;
 

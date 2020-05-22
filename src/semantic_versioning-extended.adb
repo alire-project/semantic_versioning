@@ -70,7 +70,73 @@ package body Semantic_Versioning.Extended is
                    when Ored  => (Kind => Ored)); -- Must be static expr.
       Link_Tree : Version_Set;
       Link_Pos  : Trees.Cursor;
+
+      --------------
+      -- New_Tree --
+      --------------
+
+      function New_Tree (Pos : Trees.Cursor) return Version_Set is
+         --  Create a temporary version set with this subtree, so it can be
+         --  compared via synthetic image.
+         Tree : Trees.Tree;
+      begin
+         Trees.Copy_Subtree (Target => Tree,
+                             Parent => Tree.Root,
+                             Before => Trees.First_Child (Tree.Root),
+                             Source => Pos);
+         return Version_Set'(Set   => Tree,
+                             Image => UStrings.Null_Unbounded_String);
+      end New_Tree;
+
+      --------------
+      -- Contains --
+      --------------
+
+      function Contains (Pos : Trees.Cursor; VS : Version_Set) return Boolean
+      is
+         use Trees;
+         Pos_Kind : constant Kinds := Element (Pos).Kind;
+      begin
+
+         --  Check subtrees for a match with the same operation
+
+         for Child in Iterate_Subtree (Pos) loop
+            if not Is_Root (Parent (Child)) and then   -- Root lacks operation
+              Pos_Kind = Element (Parent (Child)).Kind -- Operation matches
+            then
+               if New_Tree (Child) = VS then
+                  return True;
+               end if;
+            end if;
+         end loop;
+
+         return False;
+      end Contains;
+
    begin
+
+      --  See if this can be simplified, starting with trivial simplifications
+
+      if L = R then
+         return L;
+      elsif Kind = Ored and then (L = Any or R = Any) then
+         return Any;
+      elsif Kind = Anded and then L = Any then
+         return R;
+      elsif Kind = Anded and then R = Any then
+         return L;
+      end if;
+
+      --  Recursive simplifications
+
+      if Contains (L.Root_Cursor, R) then
+         return L;
+      elsif Contains (R.Root_Cursor, L) then
+         return R;
+      end if;
+
+      --  Proceed with construction
+
       Link_Tree.Set.Append_Child (Link_Tree.Set.Root, Link);
       Link_Pos := Trees.First_Child (Link_Tree.Set.Root);
 
@@ -178,6 +244,16 @@ package body Semantic_Versioning.Extended is
 
    function Image (VS : Version_Set) return String is
      (To_String (VS.Image));
+
+   --------------
+   -- Simplify --
+   --------------
+
+   function Simplify (VS : Version_Set) return Version_Set
+   is (VS);
+   --  This is a fake function so it can be explained in the spec.
+   --  Simplifications occur at New_Pair, to avoid the problem of the
+   --  lost original image of subtrees
 
    ---------------------
    -- Synthetic_Image --

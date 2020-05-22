@@ -132,6 +132,19 @@ begin
    pragma Assert (X.Value ("*").Image = X.Any.Image);
    pragma Assert (X.Value ("*").Image = X.Value ("any").Image);
 
+   --  Simplifications within extended expressions
+   pragma Assert (X.Value ("1") = (X.Value ("1") and X.Value ("1")));
+   pragma Assert (X.Value ("*") = (X.Value ("*") or X.Value ("1.0")));
+   pragma Assert (X.Value ("1.0") = (X.Value ("*") and X.Value ("1.0")));
+   pragma Assert ((X.Value ("1") and
+                    (X.Value ("2") and X.Value ("1"))) =
+                  (X.Value ("2") and X.Value ("1")));
+   pragma Assert ((X.Value ("1") or
+                    (X.Value ("2") or
+                         (X.Value ("3") or X.Value ("1")))) =
+                  (X.Value ("2") or
+                    (X.Value ("3") or X.Value ("1"))));
+
    --  X + Unicode
    pragma Assert (X.Is_In (V ("1.1"), X.Value ("≠1")));
    pragma Assert (X.Is_In (V ("1.1"), X.Value ("≥1")));
