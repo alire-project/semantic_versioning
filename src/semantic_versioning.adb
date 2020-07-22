@@ -117,14 +117,6 @@ package body Semantic_Versioning is
             Last := Last + 1;
          end loop;
 
-         if not Relaxed then
-            for C of Description (Next .. Last - 1) loop
-               if C = '-' then
-                  raise Malformed_Input with "Second '-' found inside pre-release part: " & Description;
-               end if;
-            end loop;
-         end if;
-
          V.Pre_Release := UStrings.To_Unbounded_String (Description (Next .. Last - 1));
          Next := Last;
 
