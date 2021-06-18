@@ -1,10 +1,9 @@
-# Object file
-*.o
-
-# Ada Library Information
 *.ali
+*.o
+alire.lock
 
 # Generated folders
-bin
-lib
-obj
+bin/
+config/
+lib/
+obj/

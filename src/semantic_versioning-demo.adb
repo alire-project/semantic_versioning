@@ -154,5 +154,10 @@ begin
    pragma Assert (((X.Value (">=1") and X.Value ("<2")) or X.Value ("=3")) =
                     X.Value ("(>=1 & <2)|=3"));
 
+   --  Updatable conversions
+   pragma Assert (Updatable (V ("0.0.2")) = X.Value ("~0.0.2"));
+   pragma Assert (Updatable (V ("0.3.2")) = X.Value ("~0.3.2"));
+   pragma Assert (Updatable (V ("3.0.2")) = X.Value ("^3.0.2"));
+
    Put_Line ("OK");
 end Semantic_Versioning.Demo;

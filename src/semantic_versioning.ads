@@ -84,6 +84,12 @@ package Semantic_Versioning with Preelaborate is
    function To_Extended (V  : Version) return Extended.Version_Set;
    function To_Extended (VS : Basic.Version_Set) return Extended.Version_Set;
 
+   function Updatable (V : Version) return Extended.Version_Set;
+   --  Given a version, return its appropriate updatable set. E.g.:
+   --  0.0.1 --> ~0.0.1
+   --  0.1.1 --> ~0.1.1
+   --  1.0.1 --> ^1.0.1
+
 private
 
    package UStrings renames Ada.Strings.Unbounded;

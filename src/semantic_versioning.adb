@@ -291,4 +291,13 @@ package body Semantic_Versioning is
    function To_Extended (VS : Basic.Version_Set) return Extended.Version_Set is
      (Extended.To_Extended (VS));
 
+   ---------------
+   -- Updatable --
+   ---------------
+
+   function Updatable (V : Version) return Extended.Version_Set is
+     (if Major (V) = 0
+      then To_Extended (Basic.Within_Minor (V))
+      else To_Extended (Basic.Within_Major (V)));
+
 end Semantic_Versioning;
