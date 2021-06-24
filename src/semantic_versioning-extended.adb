@@ -159,7 +159,14 @@ package body Semantic_Versioning.Extended is
    ---------
 
    function Any return Version_Set is
-      (To_Extended (Basic.Any));
+     (To_Extended (Basic.Any));
+
+   ------------
+   -- Is_Any --
+   ------------
+
+   function Is_Any (VS : Version_Set) return Boolean is
+     (Vs = Any);
 
    ---------
    -- "=" --

@@ -9,6 +9,9 @@ package Semantic_Versioning.Extended with Preelaborate is
 
    function Any return Version_Set;
 
+   function Is_Any (VS : Version_Set) return Boolean;
+   --  Same as VS = Any
+
    function "=" (L, R : Version_Set) return Boolean;
 
    type Result (Valid  : Boolean;
