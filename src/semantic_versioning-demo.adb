@@ -42,6 +42,9 @@ begin
    pragma Assert (not Satisfies (V ("1.1.9"), Within_Minor (V ("1.2.0-alpha"))));
    pragma Assert (not Satisfies (V ("1.2.0-alpha"), Within_Minor (V ("1.1.0"))));
 
+   pragma Assert (    X.Is_In (V ("1.1-1"), X.Value ("^1")));
+   pragma Assert (not X.Is_In (V ("1.1-1"), X.Value ("^1.1")));
+
    -- Reconstruction
    pragma Assert (Image (V1_0_0_Alpha) = V1_0_0_Alpha_Img);
 
@@ -73,6 +76,9 @@ begin
    pragma Assert (V ("1.0.0-beta.2")     < V ("1.0.0-beta.11"));
    pragma Assert (V ("1.0.0-beta.11")    < V ("1.0.0-rc.1"));
    pragma Assert (V ("1.0.0-rc.1")       < V ("1.0.0"));
+
+   -- Other ordering checks
+   pragma Assert (V ("1.0")              < V ("1.1-rc1"));
 
    -- Next-ing
    pragma Assert (V ("1.1.1") = Next_Patch (V1_1_0));
