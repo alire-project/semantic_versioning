@@ -9,7 +9,7 @@ package body Semantic_Versioning.Extended is
 
    use type Ada.Containers.Count_Type;
 
-   Debug : constant Boolean := False;
+   Debug : constant Boolean := True;
 
    -----------
    -- Trace --
@@ -58,6 +58,23 @@ package body Semantic_Versioning.Extended is
    end New_Leaf;
 
    --------------
+   -- New_Tree --
+   --------------
+
+   function New_Tree (Pos : Trees.Cursor) return Version_Set is
+      --  Create a temporary version set with this subtree, so it can be
+      --  compared via synthetic image,
+      Tree : Trees.Tree;
+   begin
+      Trees.Copy_Subtree (Target => Tree,
+                          Parent => Tree.Root,
+                          Before => Trees.First_Child (Tree.Root),
+                          Source => Pos);
+      return Version_Set'(Set   => Tree,
+                          Image => UStrings.Null_Unbounded_String);
+   end New_Tree;
+
+   --------------
    -- New_Pair --
    --------------
 
@@ -70,23 +87,6 @@ package body Semantic_Versioning.Extended is
                    when Ored  => (Kind => Ored)); -- Must be static expr.
       Link_Tree : Version_Set;
       Link_Pos  : Trees.Cursor;
-
-      --------------
-      -- New_Tree --
-      --------------
-
-      function New_Tree (Pos : Trees.Cursor) return Version_Set is
-         --  Create a temporary version set with this subtree, so it can be
-         --  compared via synthetic image.
-         Tree : Trees.Tree;
-      begin
-         Trees.Copy_Subtree (Target => Tree,
-                             Parent => Tree.Root,
-                             Before => Trees.First_Child (Tree.Root),
-                             Source => Pos);
-         return Version_Set'(Set   => Tree,
-                             Image => UStrings.Null_Unbounded_String);
-      end New_Tree;
 
       --------------
       -- Contains --
@@ -176,6 +176,27 @@ package body Semantic_Versioning.Extended is
      (L.Synthetic_Image = R.Synthetic_Image);
 
    -----------
+   -- "not" --
+   -----------
+
+   function "not" (VS : Version_Set) return Version_Set is
+      Not_Node : constant Any_Node := (Kind => Negated);
+   begin
+      return Result : Version_Set :=
+        Version_Set'(Set   => Trees.Empty_Tree,
+                     Image => "!(" & VS.Image & ")")
+      do
+         Trace ("Creating not node: " & Image (Result));
+         Result.Set.Append_Child (Result.Set.Root,
+                                  Not_Node);
+         Result.Set.Copy_Subtree
+           (Parent => Trees.First_Child (Result.Set.Root),
+            Before => Trees.No_Element,
+            Source => Trees.First_Child (VS.Set.Root));
+      end return;
+   end "not";
+
+   -----------
    -- "and" --
    -----------
 
@@ -217,12 +238,18 @@ package body Semantic_Versioning.Extended is
                end return;
 
             when Ored =>
-                  Trace ("OR children count:" & Trees.Child_Count (Pos)'Img);
                return OK : Boolean := False do
+                  Trace ("OR children count:" & Trees.Child_Count (Pos)'Img);
                   for Child in VS.Set.Iterate_Children (Pos) loop
                      OK := OK or else Is_In (Child);
                   end loop;
                end return;
+
+            when Negated =>
+               Trace ("Evaluating NOT node with child count: "
+                      & Trees.Child_Count (Pos)'Img);
+               pragma Assert (Trees.Child_Count (Pos) = 1);
+               return not Is_In (Trees.First_Child (Pos));
 
          end case;
       end Is_In;
@@ -284,11 +311,11 @@ package body Semantic_Versioning.Extended is
                   List := List & Concrete_Images
                     (List_Kinds'Value (Node.Kind'Img));
                end if;
-               if Trees.Element (I).Kind not in Leaf | Node.Kind then
+               if Trees.Element (I).Kind not in Leaf | Node.Kind | Negated then
                   List := List & "(";
                end if;
                List := List & Img (I);
-               if Trees.Element (I).Kind not in Leaf | Node.Kind then
+               if Trees.Element (I).Kind not in Leaf | Node.Kind | Negated then
                   List := List & ")";
                end if;
                I := Trees.Next_Sibling (I);
@@ -304,6 +331,9 @@ package body Semantic_Versioning.Extended is
 
             when Anded | Ored =>
                return List_Img;
+
+            when Negated =>
+               return "!(" & Img (Trees.First_Child (Pos)) & ")";
          end case;
       end Img;
 
@@ -342,6 +372,7 @@ package body Semantic_Versioning.Extended is
                       Rparen,
                       Number,
                       Pipe,
+                      Negation,
                       Unknown,
                       VS,
                       End_Of_Input);
@@ -436,6 +467,7 @@ package body Semantic_Versioning.Extended is
                when ')'                   => return Rparen;
                when '0' .. '9'            => return Number;
                when '|'                   => return Pipe;
+               when '!'                   => return Negation;
                when '<' | '>' | '='
                         | '/' | '~' | '^' => return VS; -- already checked above, but...
                when others                => return Unknown;
@@ -456,11 +488,25 @@ package body Semantic_Versioning.Extended is
       -- Prod_EVS --
       --------------
 
-      function Prod_EVS (List_Kind : List_Kinds) return Version_Set is
+      function Prod_EVS (List_Kind : List_Kinds; With_List : Boolean)
+                         return Version_Set
+      is
          Next : Version_Set;
       begin
          Trace ("Prod EVS");
          case Next_Token is
+            when Negation =>
+               Match ('!');
+               declare
+                  Child : constant Version_Set := Prod_EVS (List_Kind, With_List => False);
+               begin
+                  if Trees.First_Child_Element (Child.Set.Root).Kind = Negated then
+                     Error ("Double negation");
+                  end if;
+                  Next := not Child;
+               end;
+
+
             when Lparen =>
                Next := Prod_EVS_Nested;
 
@@ -477,11 +523,15 @@ package body Semantic_Versioning.Extended is
          end case;
 
          --  Optional continuation list
-         if Next_Token in Ampersand | Pipe then
-            Trace ("Prod EVS: optional list present");
-            return Prod_List (Next, List_Kind);
+         if With_List then  --  I suspect this is flying on the face of LR(1)
+            if Next_Token in Ampersand | Pipe then
+               Trace ("Prod EVS: optional list present");
+               return Prod_List (Next, List_Kind);
+            else
+               Trace ("Prod EVS: optional list missing");
+               return Next;
+            end if;
          else
-            Trace ("Prod EVS: optional list missing");
             return Next;
          end if;
       end Prod_EVS;
@@ -494,7 +544,7 @@ package body Semantic_Versioning.Extended is
       begin
          Trace ("Prod EVS Nested");
          Match ('(');
-         return VS : Version_Set := Prod_EVS (Any) do
+         return VS : Version_Set := Prod_EVS (Any, With_List => True) do
             VS.Image := '(' & VS.Image & ')';
             Match (')');
          end return;
@@ -540,12 +590,12 @@ package body Semantic_Versioning.Extended is
             when Anded =>
                Check_Mismatch;
                Match ('&');
-               return New_Pair (Head, Prod_EVS (Anded), Anded);
+               return New_Pair (Head, Prod_EVS (Anded, With_List => True), Anded);
 
             when Ored =>
                Check_Mismatch;
                Match ('|');
-               return New_Pair (Head, Prod_EVS (Ored), Ored);
+               return New_Pair (Head, Prod_EVS (Ored, With_List => True), Ored);
          end case;
       end Prod_List;
 
@@ -572,7 +622,7 @@ package body Semantic_Versioning.Extended is
          return New_Valid_Result (To_Extended (Basic.Any));
       end if;
 
-      return Set : Result := New_Valid_Result (Prod_EVS (Any)) do
+      return Set : Result := New_Valid_Result (Prod_EVS (Any, With_List => True)) do
          if Next_Token /= End_Of_Input then
             Error ("Unexpected input after parsing version set: " & Str (I));
          else

@@ -30,6 +30,9 @@ package Semantic_Versioning.Extended with Preelaborate is
    function "or" (L, R : Version_Set) return Version_Set;
    --  Creates a new tree that is Simplify ((L) | (R)).
 
+   function "not" (VS : Version_Set) return Version_Set;
+   --  Creates a new tree that is Simplify (~VS)
+
    function Simplify (VS : Version_Set) return Version_Set;
    --  Apply trivial and/or simplifications to the set: "* & =1.0" --> "=1.0",
    --  "* | =1.0" --> "*", "=1.0 & =1.0" --> "=1.0"... Won't be clever enough
@@ -76,7 +79,7 @@ private
    --  A version set is a binary tree of and/or lists, with leaves being
    --  basic version sets.
 
-   type Kinds is (Anded, Ored, Leaf);
+   type Kinds is (Anded, Ored, Negated, Leaf);
 
    type Any_Node (Kind : Kinds := Leaf) is record
       case Kind is

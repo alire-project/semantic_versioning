@@ -3,6 +3,7 @@
 alire.lock
 
 # Generated folders
+/alire
 bin/
 config/
 lib/
