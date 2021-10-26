@@ -168,13 +168,34 @@ begin
    --  Negation
    pragma Assert (not X.Parse ("!!1").Valid); -- no double negation
    pragma Assert (not X.Parse ("!(!1)").Valid); -- no double negation
+   pragma Assert (not X.Parse ("!").Valid); -- no dangling
+   pragma Assert (not X.Parse ("3|!").Valid); -- no dangling
    pragma Assert (X.Parse ("!(!1 | 2)").Valid); -- Allowed b.c. of nested EVS
    pragma Assert (X.Value ("!1&2").Synthetic_Image   = "!(=1.0.0)&=2.0.0"); -- Respect precedence
    pragma Assert (X.Value ("!(1&2)").Synthetic_Image = "!(=1.0.0&=2.0.0)"); -- Respect precedence
    pragma Assert (X.Value ("!^1").Synthetic_Image = "!(^1.0.0)");
    pragma Assert (X.Value ("!^1").Synthetic_Image = X.Value ("!(^1)").Synthetic_Image); -- Equivalent
 
+   --  Negation operator and mixing
+   pragma Assert (X.Value ("!1") = not X.Value ("1"));
+   pragma Assert (X.Value ("!1") = not X.Value ("=1"));
+   pragma Assert (X.Value ("!=1") = not X.Value ("=1"));
+   pragma Assert (X.Value ("!(=1)") = not X.Value ("=1"));
+   pragma Assert (X.Value ("!1&2") = (not X.Value ("=1") and X.Value ("=2")));
+   pragma Assert (X.Value ("!(1)&2") = (not X.Value ("=1") and X.Value ("=2")));
+
    --  Negation membership tests
+   pragma Assert (X.Is_In (V ("1"), X.Value ("!2")));
+   pragma Assert (not X.Is_In (V ("1"), X.Value ("!1")));
+   pragma Assert (X.Is_In (V ("1-rc"), X.Value ("!1")));
+   pragma Assert (X.Is_In (V ("1.1"), X.Value ("!1")));
+   pragma Assert (X.Is_In (V ("1.1"), X.Value ("!~1.0")));
+   pragma Assert (not X.Is_In (V ("1.1"), X.Value ("!^1")));
+   pragma Assert (X.Is_In (V ("2"), X.Value ("!1|2")));
+   pragma Assert (X.Is_In (V ("2"), X.Value ("!1|3")));
+   pragma Assert (X.Is_In (V ("2"), X.Value ("1|!3")));
+   pragma Assert (not X.Is_In (V ("1"), X.Value ("!(1|3)")));
+   pragma Assert (not X.Is_In (V ("3"), X.Value ("!(1|3)")));
 
    Put_Line ("OK");
 end Semantic_Versioning.Demo;
