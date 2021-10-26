@@ -9,7 +9,7 @@ package body Semantic_Versioning.Extended is
 
    use type Ada.Containers.Count_Type;
 
-   Debug : constant Boolean := True;
+   Debug : constant Boolean := False;
 
    -----------
    -- Trace --

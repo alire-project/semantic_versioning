@@ -165,5 +165,16 @@ begin
    pragma Assert (Updatable (V ("0.3.2")) = X.Value ("~0.3.2"));
    pragma Assert (Updatable (V ("3.0.2")) = X.Value ("^3.0.2"));
 
+   --  Negation
+   pragma Assert (not X.Parse ("!!1").Valid); -- no double negation
+   pragma Assert (not X.Parse ("!(!1)").Valid); -- no double negation
+   pragma Assert (X.Parse ("!(!1 | 2)").Valid); -- Allowed b.c. of nested EVS
+   pragma Assert (X.Value ("!1&2").Synthetic_Image   = "!(=1.0.0)&=2.0.0"); -- Respect precedence
+   pragma Assert (X.Value ("!(1&2)").Synthetic_Image = "!(=1.0.0&=2.0.0)"); -- Respect precedence
+   pragma Assert (X.Value ("!^1").Synthetic_Image = "!(^1.0.0)");
+   pragma Assert (X.Value ("!^1").Synthetic_Image = X.Value ("!(^1)").Synthetic_Image); -- Equivalent
+
+   --  Negation membership tests
+
    Put_Line ("OK");
 end Semantic_Versioning.Demo;
