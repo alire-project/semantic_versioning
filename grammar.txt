@@ -6,8 +6,9 @@ EVS: extended version set (with and/or ops)
 
 
 Grammar (after LR removal, with precedence mixing forbidden)
+NEG and list are exclusive in EVS production because of NEG maximum precedence
 =======
-EVS         ::= (EVS_Nested | VS) [list]
+EVS         ::= [NEG] (EVS_Nested | VS) [list]
 EVS_Nested  ::= '(' EVS ')'
 VS          ::= V | OP V
 V           ::= <single version terminal>
@@ -17,3 +18,4 @@ list_or     ::= '|' EVS_or
 EVS_and     ::= (EVS_Nested | VS) [and_list]
 EVS_or      ::= (EVS_Nested | VS) [or_list]
 OP          ::= '<' | '>' etc <comparison operators>
+NEG         ::= '!'
