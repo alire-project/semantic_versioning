@@ -207,16 +207,16 @@ package body Semantic_Versioning.Basic is
       --  Rest of cases
       if Begins_With (S, "/=") then
          return Except (Parse (Remainder (S, "/="), Relaxed));
-      elsif Unicode and then Begins_With (S, "≠") then
-         return Except (Parse (Remainder (S, "≠"), Relaxed));
+      elsif Unicode and then Begins_With (S, U ("≠")) then
+         return Except (Parse (Remainder (S, U ("≠")), Relaxed));
       elsif Begins_With (S, ">=") then
          return At_Least (Parse (Remainder (S, ">="), Relaxed));
-      elsif Unicode and then Begins_With (S, "≥") then
-         return At_Least (Parse (Remainder (S, "≥"), Relaxed));
+      elsif Unicode and then Begins_With (S, U ("≥")) then
+         return At_Least (Parse (Remainder (S, U ("≥")), Relaxed));
       elsif Begins_With (S, "<=") then
          return At_most (Parse (Remainder (S, "<="), Relaxed));
-      elsif Unicode and then Begins_With (S, "≤") then
-         return At_Most (Parse (Remainder (S, "≤"), Relaxed));
+      elsif Unicode and then Begins_With (S, U ("≤")) then
+         return At_Most (Parse (Remainder (S, U ("≤")), Relaxed));
       elsif Begins_With (S, ">") then
          return More_Than (Parse (Remainder (S, ">"), Relaxed));
       elsif Begins_With (S, "<") then

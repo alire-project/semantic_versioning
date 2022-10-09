@@ -22,9 +22,9 @@ package body Semantic_Versioning is
      ((S'Length >= 1 and then S (S'First) in '<' | '>' | '=' | '/' | '~' | '^')
        or else
          (Unicode and then
-            (Begins_With (S, "≠") or else
-             Begins_With (S, "≥") or else
-             Begins_With (S, "≤"))));
+            (Begins_With (S, U ("≠")) or else
+             Begins_With (S, U ("≥")) or else
+             Begins_With (S, U ("≤")))));
 
    -----------
    -- Parse --

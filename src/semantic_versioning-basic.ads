@@ -147,10 +147,10 @@ private
                       Unicode        : Boolean := False;
                       Implicit_Equal : Boolean := False) return String is
      (case Condition is
-         when At_Least     => (if Unicode then "≥" else ">="),
-         when At_Most      => (if Unicode then "≤" else "<="),
+         when At_Least     => (if Unicode then U ("≥") else ">="),
+         when At_Most      => (if Unicode then U ("≤") else "<="),
          when Exactly      => (if Implicit_Equal then "" else "="),
-         when Except       => (if Unicode then "≠" else "/="),
+         when Except       => (if Unicode then U ("≠") else "/="),
          when Within_Major => "^",
          when Within_Minor => "~");
 
