@@ -659,4 +659,12 @@ package body Semantic_Versioning.Extended is
       end if;
    end Value;
 
+   -------------
+   -- Value_U --
+   -------------
+
+   function Value_U (Str     : Wide_Wide_String;
+                     Relaxed : Boolean := False) return Version_Set
+   is (Value (U (Str), Relaxed));
+
 end Semantic_Versioning.Extended;

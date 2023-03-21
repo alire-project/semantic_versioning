@@ -98,13 +98,13 @@ begin
    pragma Assert (Exactly (V1_0_0) = To_Set ("=1.0.0"));
 
    pragma Assert (Except  (V1_0_0) = To_Set ("/=1.0.0"));
-   pragma Assert (Except  (V1_0_0) = To_Set ("≠1.0.0"));
+   pragma Assert (Except  (V1_0_0) = To_Set_U ("≠1.0.0"));
 
    pragma Assert (At_Least (V1_0_0) = To_Set (">=1.0.0"));
-   pragma Assert (At_Least (V1_0_0) = To_Set ("≥1.0.0"));
+   pragma Assert (At_Least (V1_0_0) = To_Set_U ("≥1.0.0"));
 
    pragma Assert (At_Most (V1_0_0) = To_Set ("<=1.0.0"));
-   pragma Assert (At_Most (V1_0_0) = To_Set ("≤1.0.0"));
+   pragma Assert (At_Most (V1_0_0) = To_Set_U ("≤1.0.0"));
 
    pragma Assert (More_Than (V1_0_0) = To_Set (">1.0.0"));
    pragma Assert (Less_Than (V1_0_0) = To_Set ("<1.0.0"));
@@ -152,9 +152,9 @@ begin
                     (X.Value ("3") or X.Value ("1"))));
 
    --  X + Unicode
-   pragma Assert (X.Is_In (V ("1.1"), X.Value ("≠1")));
-   pragma Assert (X.Is_In (V ("1.1"), X.Value ("≥1")));
-   pragma Assert (X.Is_In (V ("1.1"), X.Value ("≤1.1")));
+   pragma Assert (X.Is_In (V ("1.1"), X.Value_U ("≠1")));
+   pragma Assert (X.Is_In (V ("1.1"), X.Value_U ("≥1")));
+   pragma Assert (X.Is_In (V ("1.1"), X.Value_U ("≤1.1")));
 
    --  Extended operators
    pragma Assert (((X.Value (">=1") and X.Value ("<2")) or X.Value ("=3")) =

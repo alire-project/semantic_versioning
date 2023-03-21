@@ -1,9 +1,11 @@
 with Ada.Command_Line; use Ada.Command_Line;
-with Ada.Text_IO; use Ada.Text_IO;
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
+with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 
 --  Parse the first argument and re-emit its image.
 
 procedure Semantic_Versioning.Parser is
+   use Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 begin
    if Argument_Count /= 1 then
       Put_Line ("Need exactly one argument!");
@@ -15,7 +17,7 @@ begin
    begin
       V := Parse (Argument (1), Relaxed => True);
 
-      Put_Line (Image (V));
+      Put_Line (Decode (Image (V)));
    exception
       when Malformed_Input =>
          Put_Line ("Uh oh... that was not a nice version!");

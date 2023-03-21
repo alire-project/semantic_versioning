@@ -63,6 +63,9 @@ package Semantic_Versioning.Extended with Preelaborate is
    --  This version will raise Malformed_Input with the corresponding error as
    --  message, instead of returning a Result.
 
+   function Value_U (Str     : Wide_Wide_String;
+                     Relaxed : Boolean := False) return Version_Set;
+
    function Image (VS : Version_Set) return String;
    --  Original image, as given to Value
 

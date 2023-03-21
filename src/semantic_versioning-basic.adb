@@ -227,6 +227,14 @@ package body Semantic_Versioning.Basic is
       raise Malformed_Input with "invalid set: " & S;
    end To_Set;
 
+   --------------
+   -- To_Set_U --
+   --------------
+
+   function To_Set_U (S       : Unicode_Version_String;
+                    Relaxed : Boolean := False) return Version_Set
+   is (To_Set (U (S), Relaxed));
+
    -----------
    -- Value --
    -----------

@@ -24,6 +24,9 @@ package Semantic_Versioning with Preelaborate is
    subtype Version_String is String
      with Dynamic_Predicate => (for all S of Version_String => S /= ' ');
 
+   subtype Unicode_Version_String is Wide_Wide_String
+     with Dynamic_Predicate => (for all S of Unicode_Version_String => S /= ' ');
+
    type Version is tagged private;
    --  A version is a major, minor and patch number
    --  Optionally it may include pre-release name and build metadata, e.g.:
