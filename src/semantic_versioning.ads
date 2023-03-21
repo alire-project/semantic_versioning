@@ -1,11 +1,15 @@
 private with Ada.Strings;
 private with Ada.Strings.Fixed;
 private with Ada.Strings.Unbounded;
+private with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 limited with Semantic_Versioning.Basic;
 limited with Semantic_Versioning.Extended;
 
 package Semantic_Versioning with Preelaborate is
+
+   --  Any subprograms accepting or outputting Unicode text in this library
+   --  expect/emit UTF-8 encoded strings.
 
    Malformed_Input : exception;
    --  Returned whenever bad data is received. This includes, at least:
@@ -19,6 +23,9 @@ package Semantic_Versioning with Preelaborate is
 
    subtype Version_String is String
      with Dynamic_Predicate => (for all S of Version_String => S /= ' ');
+
+   subtype Unicode_Version_String is Wide_Wide_String
+     with Dynamic_Predicate => (for all S of Unicode_Version_String => S /= ' ');
 
    type Version is tagged private;
    --  A version is a major, minor and patch number
@@ -95,6 +102,11 @@ private
    package UStrings renames Ada.Strings.Unbounded;
    subtype UString is UStrings.Unbounded_String;
    use all type UString;
+
+   function U (S          : Wide_Wide_String;
+               Output_BOM : Boolean := False)
+               return Ada.Strings.UTF_Encoding.UTF_8_String
+               renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode;
 
    type Version is tagged record
       Major,

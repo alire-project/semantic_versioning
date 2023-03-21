@@ -207,16 +207,16 @@ package body Semantic_Versioning.Basic is
       --  Rest of cases
       if Begins_With (S, "/=") then
          return Except (Parse (Remainder (S, "/="), Relaxed));
-      elsif Unicode and then Begins_With (S, "≠") then
-         return Except (Parse (Remainder (S, "≠"), Relaxed));
+      elsif Unicode and then Begins_With (S, U ("≠")) then
+         return Except (Parse (Remainder (S, U ("≠")), Relaxed));
       elsif Begins_With (S, ">=") then
          return At_Least (Parse (Remainder (S, ">="), Relaxed));
-      elsif Unicode and then Begins_With (S, "≥") then
-         return At_Least (Parse (Remainder (S, "≥"), Relaxed));
+      elsif Unicode and then Begins_With (S, U ("≥")) then
+         return At_Least (Parse (Remainder (S, U ("≥")), Relaxed));
       elsif Begins_With (S, "<=") then
          return At_most (Parse (Remainder (S, "<="), Relaxed));
-      elsif Unicode and then Begins_With (S, "≤") then
-         return At_Most (Parse (Remainder (S, "≤"), Relaxed));
+      elsif Unicode and then Begins_With (S, U ("≤")) then
+         return At_Most (Parse (Remainder (S, U ("≤")), Relaxed));
       elsif Begins_With (S, ">") then
          return More_Than (Parse (Remainder (S, ">"), Relaxed));
       elsif Begins_With (S, "<") then
@@ -226,6 +226,14 @@ package body Semantic_Versioning.Basic is
       --  All others
       raise Malformed_Input with "invalid set: " & S;
    end To_Set;
+
+   --------------
+   -- To_Set_U --
+   --------------
+
+   function To_Set_U (S       : Unicode_Version_String;
+                    Relaxed : Boolean := False) return Version_Set
+   is (To_Set (U (S), Relaxed));
 
    -----------
    -- Value --

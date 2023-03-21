@@ -5,6 +5,14 @@ package Semantic_Versioning.Basic with Preelaborate is
    --  Collections of versions (usually a compatible subset). These basic sets
    --  only allow "and" conditions.
 
+   --------------------------
+   --  NOTE ABOUT UNICODE  --
+   --------------------------
+
+   --  All strings received or emitted by this package are expected to be
+   --  either plain ASCII or UTF-8-encoded. The regular String type is used
+   --  to store such UTF-8 strings.
+
    type Version_Set is tagged private;
 
    type Result (Valid  : Boolean;
@@ -41,6 +49,11 @@ package Semantic_Versioning.Basic with Preelaborate is
    -- The following operators are recognized:
    --   = /= ≠ > >= ≥ < ≤ <= ~ ^, with the meanings given in the following functions.
    -- In addition, a plain version is equivalent to =, and "any", "*" is any version.
+
+   function To_Set_U (S       : Unicode_Version_String;
+                      Relaxed : Boolean := False) return Version_Set;
+   --  As the previous one, but Unicode is enabled and S is a wide wide string.
+   --  The ugly _U is to avoid ambiguities with literals.
 
    function Parse (S       : String;
                    Relaxed : Boolean := False;
@@ -147,10 +160,10 @@ private
                       Unicode        : Boolean := False;
                       Implicit_Equal : Boolean := False) return String is
      (case Condition is
-         when At_Least     => (if Unicode then "≥" else ">="),
-         when At_Most      => (if Unicode then "≤" else "<="),
+         when At_Least     => (if Unicode then U ("≥") else ">="),
+         when At_Most      => (if Unicode then U ("≤") else "<="),
          when Exactly      => (if Implicit_Equal then "" else "="),
-         when Except       => (if Unicode then "≠" else "/="),
+         when Except       => (if Unicode then U ("≠") else "/="),
          when Within_Major => "^",
          when Within_Minor => "~");
 

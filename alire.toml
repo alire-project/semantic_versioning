@@ -1,5 +1,5 @@
 name = "semantic_versioning"
-version = "2.1"
+version = "3.0"
 description = "Semantic Versioning in Ada"
 licenses = "LGPL-3.0-only"
 website = "https://github.com/alire-project/semantic_versioning"
