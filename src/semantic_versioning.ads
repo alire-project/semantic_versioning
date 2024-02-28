@@ -66,6 +66,15 @@ package Semantic_Versioning with Preelaborate is
    function "=" (L, R : Version) return Boolean;
    -- Conforming to Semver spec, the build metadata is not included in the comparison.
 
+   function ">" (L, R : Version) return Boolean
+   is (not (L < R or else L = R));
+
+   function "<=" (L, R : Version) return Boolean
+   is (not (L > R));
+
+   function ">=" (L, R : Version) return Boolean
+   is (not (L < R));
+
    function Major (V : Version) return Point;
    function Minor (V : Version) return Point;
    function Patch (V : Version) return Point;
