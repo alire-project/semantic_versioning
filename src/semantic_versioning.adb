@@ -70,13 +70,15 @@ package body Semantic_Versioning is
       function Eat_Number return Point is
          Last : Natural := Next + 1;
       begin
+         if Next <= Description'Last and then Next_Token (Next) /= Number then
+            raise Malformed_Input with "Empty point number: " & Description (Next);
+         elsif Next > Description'Last then
+            raise Malformed_Input with "Empty point number (EOF)";
+         end if;
+
          while Last <= Description'Last and then Next_Token (Last) = Number loop
             Last := Last + 1;
          end loop;
-
-         if Next > Description'Last or else Last = Next then
-            raise Malformed_Input with "Empty point number";
-         end if;
 
          return Number : constant Point := Point'Value (Description (Next .. Last - 1)) do
             Next := Last;
@@ -138,8 +140,30 @@ package body Semantic_Versioning is
       begin
          case To_See is
             when Major => V.Major := Eat_Number;
-            when Minor => V.Minor := Eat_Number;
-            when Patch => V.Patch := Eat_Number;
+            when Minor =>
+               begin
+                  V.Minor := Eat_Number;
+               exception
+                  when Malformed_Input =>
+                     if Relaxed then
+                        Next := Next - 1; -- We need to re-eat the '.'
+                        Accept_Build;
+                     else
+                        raise;
+                     end if;
+               end;
+            when Patch =>
+               begin
+                  V.Patch := Eat_Number;
+               exception
+                  when Malformed_Input =>
+                     if Relaxed then
+                        Next := Next - 1; -- We need to re-eat the '.'
+                        Accept_Build;
+                     else
+                        raise;
+                     end if;
+               end;
             when others => raise Malformed_Input with "All foreseeable points already seen";
          end case;
          To_See := Foreseeable'Succ (To_See);

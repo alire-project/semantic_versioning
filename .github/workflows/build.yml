@@ -2,6 +2,9 @@ name: build
 
 on:
   push:
+    branches:
+      - main
+      - master
   pull_request:
     paths-ignore:
       - 'doc/**'
@@ -10,17 +13,18 @@ on:
 jobs:
 
   build:
-    name: ${{ matrix.os }}
- 
+    name: ${{ matrix.os }} / GNAT ${{ matrix.gnat }}
+
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
         os:
-          - macos-latest
+          - macos-12
           - ubuntu-latest
           - windows-latest
- 
+        gnat: [10, 11, 12, 13, 14]
+
     steps:
     - name: Check out repository
       uses: actions/checkout@v1
@@ -29,22 +33,9 @@ jobs:
       run: git submodule update --init --recursive
 
     - name: Set up GNAT toolchain (FSF)
-      if: matrix.os == 'ubuntu-latest'
-      uses: ada-actions/toolchain@ce2021
+      uses: alire-project/alr-install@v1
       with:
-        distrib: fsf 
-
-    - name: Set up GNAT toolchain (Community 2021)
-      if: matrix.os == 'windows-latest'
-      uses: ada-actions/toolchain@ce2021
-      with:
-        distrib: community
-
-    - name: Set up GNAT toolchain (Community 2020)
-      if: matrix.os == 'macos-latest'
-      uses: ada-actions/toolchain@ce2020
-      with:
-        distrib: community
+        crates: gnat_native^${{matrix.gnat}} gprbuild
 
     - name: Build on demand
       run: gprbuild -j0 -p -XSEMVER_BUILD_MODE=On_Demand

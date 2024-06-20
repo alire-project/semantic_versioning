@@ -197,5 +197,9 @@ begin
    pragma Assert (not X.Is_In (V ("1"), X.Value ("!(1|3)")));
    pragma Assert (not X.Is_In (V ("3"), X.Value ("!(1|3)")));
 
+   --  Relaxed parsing, instead of failing we should dump the first strange thing into the build part
+   pragma Assert (Parse ("1.dfsg-3.1ubuntu2", Relaxed => True) = V ("1+.dfsg-3.1ubuntu2"));
+   pragma Assert (Parse ("1.3.dfsg-3.1ubuntu2", Relaxed => True) = V ("1.3+.dfsg-3.1ubuntu2"));
+
    Put_Line ("OK");
 end Semantic_Versioning.Demo;

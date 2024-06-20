@@ -1,4 +1,5 @@
 with Ada.Command_Line; use Ada.Command_Line;
+with Ada.Exceptions;
 with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 with Ada.Wide_Wide_Text_IO; use Ada.Wide_Wide_Text_IO;
 
@@ -19,7 +20,8 @@ begin
 
       Put_Line (Decode (Image (V)));
    exception
-      when Malformed_Input =>
-         Put_Line ("Uh oh... that was not a nice version!");
+      when E : Malformed_Input =>
+         Put_Line ("Uh oh... that was not a nice version: "
+                   & Decode (Ada.Exceptions.Exception_Message (E)));
    end;
 end Semantic_Versioning.Parser;
