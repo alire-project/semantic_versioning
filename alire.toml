@@ -9,3 +9,6 @@ maintainers = [ "alejandro@mosteo.com", ]
 maintainers-logins = [ "mosteo", ]
 
 tags = ["semver", "semantic", "versioning"]
+
+[test]
+runner = 'alire'
