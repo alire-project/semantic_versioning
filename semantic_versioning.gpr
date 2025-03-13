@@ -13,8 +13,7 @@ project Semantic_Versioning is
 
    case Build_Mode is
       when "On_Demand" =>
-         for Main use ("semantic_versioning-demo.adb",
-                       "semantic_versioning-parser.adb",
+         for Main use ("semantic_versioning-parser.adb",
                        "semantic_versioning-extended-parser.adb");
          for Object_Dir use "obj";
 

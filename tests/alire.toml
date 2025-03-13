@@ -1,0 +1,12 @@
+name = 'semver_tests'
+description = ''
+version = '0.0.0-test'
+
+[[depends-on]]
+semantic_versioning = '*'
+
+[[pins]]
+semantic_versioning = { path = '..' }
+
+[build-profiles]
+semantic_versioning = 'validation'
