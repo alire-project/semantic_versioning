@@ -46,5 +46,10 @@ jobs:
     - name: Build shared lib
       run: gprbuild -j0 -p -XSEMVER_BUILD_MODE=Shared_Lib
 
-    - name: Run test programs
-      run: bin/demo
+    - name: Set up nightly Alire to run testsuite
+      uses: alire-project/setup-alire@v4
+      with:
+        version: nightly
+
+    - name: Run tests
+      run: alr test
