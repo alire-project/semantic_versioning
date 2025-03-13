@@ -1,4 +1,4 @@
-name: build
+name: test
 
 on:
   push:
@@ -12,18 +12,28 @@ on:
 
 jobs:
 
-  build:
-    name: ${{ matrix.os }} / GNAT ${{ matrix.gnat }}
-
-    runs-on: ${{ matrix.os }}
-
+  test:
+    name: ${{ matrix.platform.id }}
+    runs-on: ${{ matrix.platform.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os:
-          - macos-12
-          - ubuntu-latest
-          - windows-latest
-        gnat: [10, 11, 12, 13, 14]
+        platform:
+          - os: macos-13            # x64
+            id: x86_64-macos
+
+          - os: macos-latest        # arm64
+            id: aarch64-macos
+
+          - os: ubuntu-22.04        # x64, oldest supported so releases can run on older distros
+            id: x86_64-linux
+
+# Unavailable until setup-alire/alr-install are updated to support alr 2.1
+#          - os: ubuntu-24.04-arm    # new ARM runners
+#            id: aarch64-linux
+
+          - os: windows-latest      # x64
+            id: x86_64-windows
 
     steps:
     - name: Check out repository
@@ -33,9 +43,9 @@ jobs:
       run: git submodule update --init --recursive
 
     - name: Set up GNAT toolchain (FSF)
-      uses: alire-project/alr-install@v1
+      uses: alire-project/alr-install@v2
       with:
-        crates: gnat_native^${{matrix.gnat}} gprbuild
+        crates: gnat_native gprbuild
 
     - name: Build on demand
       run: gprbuild -j0 -p -XSEMVER_BUILD_MODE=On_Demand
