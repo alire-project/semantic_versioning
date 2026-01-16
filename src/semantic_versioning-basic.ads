@@ -24,31 +24,48 @@ package Semantic_Versioning.Basic with Preelaborate is
          end case;
       end record;
 
+   type Options is record
+      Unicode        : Boolean := True;
+      --  Accept/emit Unicode operators (e.g., ≠, ≥, ≤) instead of ASCII ones
+
+      Word_Operators : Boolean := True;
+      --  Accept/emit word operators (and, or, not) instead of symbolic ones (&, |, ~)
+
+      Implicit_Equal : Boolean := True;
+      --  Accept/emit implicit equal operator (i.e., no "=" before versions)
+      --  when no other operator before a version is given.
+      --  E.g., "1.2.3" instead of "=1.2.3"
+   end record;
+
+   Default_Options : constant Options := (others => <>);
+   Output_Options  : constant Options :=
+     (Unicode => False, Word_Operators => False, Implicit_Equal => False);
+   --  To preserve backwards compatibility
+
    Any : constant Version_Set;
 
    function Image_Ada (VS : Version_Set) return String;
    --  Ada-like textual representation.
    --  E.g., "Within_Major ("1.0.0") and Except ("1.0.5")"
 
-   function Image_Abbreviated (VS             : Version_Set;
-                               Unicode        : Boolean := False;
-                               Implicit_Equal : Boolean := False) return String;
+   function Image_Abbreviated (VS   : Version_Set;
+                               Opts : Options := Default_Options)
+                               return String;
    --  '&' separated; e.g. "^1.0.0 & ≠1.0.5"
-   --  If Unicode, the operator can be ≠, etc
-   --  If implicit equal, "=" will be omitted
+   --  Options control output format (Unicode, Implicit_Equal)
 
-   function Image (VS             : Version_Set;
-                   Unicode        : Boolean := False;
-                   Implicit_Equal : Boolean := False) return String
+   function Image (VS   : Version_Set;
+                   Opts : Options := Default_Options) return String
                    renames Image_Abbreviated;
 
    function To_Set (S       : Version_String;
                     Relaxed : Boolean := False;
-                    Unicode : Boolean := True) return Version_Set;
+                    Opts    : Options := Default_Options) return Version_Set;
    -- Parses a single version set from a single restriction representation:
    -- The following operators are recognized:
    --   = /= ≠ > >= ≥ < ≤ <= ~ ^, with the meanings given in the following functions.
    -- In addition, a plain version is equivalent to =, and "any", "*" is any version.
+   -- Options control parsing (Unicode for accepting Unicode operators)
 
    function To_Set_U (S       : Unicode_Version_String;
                       Relaxed : Boolean := False) return Version_Set;
@@ -57,14 +74,16 @@ package Semantic_Versioning.Basic with Preelaborate is
 
    function Parse (S       : String;
                    Relaxed : Boolean := False;
-                   Unicode : Boolean := True) return Result;
+                   Opts    : Options := Default_Options) return Result;
    --  Parse an expression possibly containing several sets, "&"-separated.
+   --  Options control parsing (Unicode for accepting Unicode operators)
 
    function Value (S       : String;
                    Relaxed : Boolean := False;
-                   Unicode : Boolean := True) return Version_Set;
+                   Opts    : Options := Default_Options) return Version_Set;
    --  As Parse, but raises Malformed_Error with Error as message instead of
    --  returning a Result.
+   --  Options control parsing (Unicode for accepting Unicode operators)
 
    function At_Least  (V : Version) return Version_Set; -- >= ≥
    function At_Most   (V : Version) return Version_Set; -- <= ≤
@@ -94,20 +113,17 @@ package Semantic_Versioning.Basic with Preelaborate is
    type Conditions is
      (At_Least, At_Most, Exactly, Except, Within_Major, Within_Minor);
 
-   function Operator (Condition      : Conditions;
-                      Unicode        : Boolean := False;
-                      Implicit_Equal : Boolean := False) return String;
+   function Operator (Condition : Conditions;
+                      Opts      : Options := Default_Options) return String;
    --  Returns a short string with the visible operator: =, /=, ~, ...
-   --  If Unicode, the operator can be ≠, etc
-   --  If implicit equal, "=" will be omitted
+   --  Options control output format (Unicode, Implicit_Equal)
 
    type Restriction is private;
 
-   function Operator_Image (R              : Restriction;
-                            Unicode        : Boolean := False;
-                            Implicit_Equal : Boolean := False) return String;
+   function Operator_Image (R    : Restriction;
+                            Opts : Options := Default_Options) return String;
    --  Image using operator (e.g., <=1.0.1, ~2.0.0, /=0.1.2)
-   --  See Image (Set) for Unicode, Implicit_Equal meaning
+   --  Options control output format (Unicode, Implicit_Equal)
 
    function Condition  (R : Restriction) return Conditions;
    function On_Version (R : Restriction) return Version;
@@ -156,24 +172,19 @@ private
    function Element (VS : Version_Set; I : Positive) return Restriction is
      (VS (I));
 
-   function Operator (Condition      : Conditions;
-                      Unicode        : Boolean := False;
-                      Implicit_Equal : Boolean := False) return String is
+   function Operator (Condition : Conditions;
+                      Opts      : Options := Default_Options) return String is
      (case Condition is
-         when At_Least     => (if Unicode then U ("≥") else ">="),
-         when At_Most      => (if Unicode then U ("≤") else "<="),
-         when Exactly      => (if Implicit_Equal then "" else "="),
-         when Except       => (if Unicode then U ("≠") else "/="),
+         when At_Least     => (if Opts.Unicode then U ("≥") else ">="),
+         when At_Most      => (if Opts.Unicode then U ("≤") else "<="),
+         when Exactly      => (if Opts.Implicit_Equal then "" else "="),
+         when Except       => (if Opts.Unicode then U ("≠") else "/="),
          when Within_Major => "^",
          when Within_Minor => "~");
 
-   function Operator_Image (R              : Restriction;
-                            Unicode        : Boolean := False;
-                            Implicit_Equal : Boolean := False) return String is
-     (Operator (R.Condition,
-                Unicode,
-                Implicit_Equal) &
-        Image (R.On_Version));
+   function Operator_Image (R    : Restriction;
+                            Opts : Options := Default_Options) return String is
+     (Operator (R.Condition, Opts) & Image (R.On_Version));
 
    function Contains  (VS : Version_Set; V : Version) return Boolean is
      (Is_In (V, VS));

@@ -293,8 +293,9 @@ package body Semantic_Versioning.Extended is
    -- Synthetic_Image --
    ---------------------
 
-   function Synthetic_Image (VS      : Version_Set;
-                             Unicode : Boolean := False) return String is
+   function Synthetic_Image (VS   : Version_Set;
+                             Opts : Basic.Options := Basic.Output_Options)
+                             return String is
 
       function Img (Pos : Trees.Cursor) return String is
          Node : Any_Node renames Trees.Element (Pos);
@@ -326,8 +327,7 @@ package body Semantic_Versioning.Extended is
       begin
          case Node.Kind is
             when Leaf =>
-               return Basic.Image_Abbreviated (Node.VS,
-                                               Unicode => Unicode);
+               return Basic.Image_Abbreviated (Node.VS, Opts);
 
             when Anded | Ored =>
                return List_Img;
@@ -359,7 +359,8 @@ package body Semantic_Versioning.Extended is
 
    function Parse (Str     : String;
                    Relaxed : Boolean := False;
-                   Unicode : Boolean := True) return Result is
+                   Opts    : Basic.Options := Basic.Default_Options)
+                   return Result is
 
       --  See grammar.txt for the recursive parser being implemented here.
       --  Since there is no need to backtrack, we can store here the partial
@@ -501,7 +502,7 @@ package body Semantic_Versioning.Extended is
                return Negation;
             end if;
 
-            if Begins_With_Relational (Str (I .. Str'Last), Unicode) then
+            if Begins_With_Relational (Str (I .. Str'Last), Opts.Unicode) then
                return VS;
             end if;
 
@@ -690,7 +691,7 @@ package body Semantic_Versioning.Extended is
          Trace ("Prod VS");
          return New_Leaf (Basic.To_Set (S       => BVS_Image,
                                         Relaxed => Relaxed,
-                                        Unicode => Unicode), BVS_Image);
+                                        Opts    => Opts), BVS_Image);
       exception
          when Malformed_Input =>
             Error ("Malformed basic version set: " & BVS_Image);
@@ -727,11 +728,12 @@ package body Semantic_Versioning.Extended is
 
    function Value (Str     : String;
                    Relaxed : Boolean := False;
-                   Unicode : Boolean := True) return Version_Set
+                   Opts    : Basic.Options := Basic.Default_Options)
+                   return Version_Set
    is
       R : constant Result := Parse (Str     => Str,
                                     Relaxed => Relaxed,
-                                    Unicode => Unicode);
+                                    Opts    => Opts);
    begin
       if R.Valid then
          return R.Set;

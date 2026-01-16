@@ -51,17 +51,20 @@ package Semantic_Versioning.Extended with Preelaborate is
 
    function Parse (Str     : String;
                    Relaxed : Boolean := False;
-                   Unicode : Boolean := True) return Result;
+                   Opts    : Basic.Options := Basic.Default_Options)
+                   return Result;
    --  Parse a string and return an extended version set or an error message
    --  pinpointing the error.
-   --  If Unicode, plain and unicode sequences are both accepted.
+   --  Options control parsing (Unicode for accepting Unicode operators)
    --  Relaxed is passed to Semantic_Versioning.To_Set for set conditions.
 
    function Value (Str     : String;
                    Relaxed : Boolean := False;
-                   Unicode : Boolean := True) return Version_Set;
+                   Opts    : Basic.Options := Basic.Default_Options)
+                   return Version_Set;
    --  This version will raise Malformed_Input with the corresponding error as
    --  message, instead of returning a Result.
+   --  Options control parsing (Unicode for accepting Unicode operators)
 
    function Value_U (Str     : Wide_Wide_String;
                      Relaxed : Boolean := False) return Version_Set;
@@ -69,8 +72,9 @@ package Semantic_Versioning.Extended with Preelaborate is
    function Image (VS : Version_Set) return String;
    --  Original image, as given to Value
 
-   function Synthetic_Image (VS      : Version_Set;
-                             Unicode : Boolean := False) return String;
+   function Synthetic_Image (VS   : Version_Set;
+                             Opts : Basic.Options := Basic.Output_Options)
+                             return String;
    --  Reconstructed normalized image
 
 private
