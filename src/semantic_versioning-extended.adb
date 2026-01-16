@@ -410,6 +410,20 @@ package body Semantic_Versioning.Extended is
          end if;
       end Match;
 
+      procedure Match (S : String) is
+      begin
+         if I > Str'Last then
+            Error ("Incomplete expression when expecting: " & S);
+         elsif I + S'Length - 1 > Str'Last then
+            Error ("Incomplete expression when expecting: " & S);
+         elsif ACH.To_Lower (Str (I .. I + S'Length - 1)) /= ACH.To_Lower (S) then
+            Error ("Got a '" & Str (I) & "' when expecting: " & S);
+         else
+            Trace ("Matching " & S & " at pos" & I'Img);
+            I := I + S'Length;
+         end if;
+      end Match;
+
       -------------------
       -- Next_Basic_VS --
       -------------------
@@ -518,21 +532,21 @@ package body Semantic_Versioning.Extended is
          case T is
             when Ampersand =>
                if Is_Keyword ("and") then
-                  I := I + 3;
+                  Match ("and");
                else
                   Match ('&');
                end if;
 
             when Pipe =>
                if Is_Keyword ("or") then
-                  I := I + 2;
+                  Match ("or");
                else
                   Match ('|');
                end if;
 
             when Negation =>
                if Is_Keyword ("not") then
-                  I := I + 3;
+                  Match ("not");
                else
                   Match ('!');
                end if;
