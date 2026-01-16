@@ -638,7 +638,7 @@ package body Semantic_Versioning.Extended is
                if (Kind = Anded and then Next_Token = Pipe) or else
                  (Kind = Ored and then Next_Token = Ampersand)
                then
-                  Error ("Cannot mix '&' and '|' operators, use parentheses");
+                  Error ("Cannot mix 'and' and 'or' operators, use parentheses");
                end if;
             end if;
          end Check_Mismatch;
