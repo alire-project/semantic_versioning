@@ -525,12 +525,13 @@ package body Semantic_Versioning.Extended is
                when ')'                   => return Rparen;
                when '0' .. '9'            => return Number;
                when '|'                   => return Pipe;
-               when '!'                   => return Negation;
+               when '!' | '¬'             => return Negation;
                when '<' | '>' | '='
                         | '/' | '~' | '^' => return VS; -- already checked above, but...
                when others                => return Unknown;
             end case;
          end Internal;
+
       begin
          return T : constant Tokens := Internal do
             Trace ("Next token: " & T'Img);
@@ -561,6 +562,8 @@ package body Semantic_Versioning.Extended is
             when Negation =>
                if Is_Keyword ("not") then
                   Match ("not");
+               elsif Str (I) = '¬' then
+                  Match ('¬');
                else
                   Match ('!');
                end if;
