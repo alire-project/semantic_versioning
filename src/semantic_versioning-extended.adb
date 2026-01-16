@@ -410,6 +410,20 @@ package body Semantic_Versioning.Extended is
          end if;
       end Match;
 
+      procedure Match (S : String) is
+      begin
+         if I > Str'Last then
+            Error ("Incomplete expression when expecting: " & S);
+         elsif I + S'Length - 1 > Str'Last then
+            Error ("Incomplete expression when expecting: " & S);
+         elsif ACH.To_Lower (Str (I .. I + S'Length - 1)) /= ACH.To_Lower (S) then
+            Error ("Got a '" & Str (I) & "' when expecting: " & S);
+         else
+            Trace ("Matching " & S & " at pos" & I'Img);
+            I := I + S'Length;
+         end if;
+      end Match;
+
       -------------------
       -- Next_Basic_VS --
       -------------------
@@ -437,6 +451,28 @@ package body Semantic_Versioning.Extended is
       end Next_Basic_VS;
 
       ----------------
+      -- Is_Keyword --
+      ----------------
+
+      function Is_Keyword (Word : String) return Boolean is
+         Last : constant Integer := I + Word'Length - 1;
+      begin
+         if Last > Str'Last then
+            return False;
+         end if;
+
+         if ACH.To_Lower (Str (I .. Last)) /= Word then
+            return False;
+         end if;
+
+         if Last < Str'Last and then ACH.Is_Alphanumeric (Str (Last + 1)) then
+            return False;
+         end if;
+
+         return True;
+      end Is_Keyword;
+
+      ----------------
       -- Next_Token --
       ----------------
 
@@ -455,6 +491,14 @@ package body Semantic_Versioning.Extended is
 
             if I > Str'Last then
                return End_Of_Input;
+            end if;
+
+            if Is_Keyword ("and") then
+               return Ampersand;
+            elsif Is_Keyword ("or") then
+               return Pipe;
+            elsif Is_Keyword ("not") then
+               return Negation;
             end if;
 
             if Begins_With_Relational (Str (I .. Str'Last), Unicode) then
@@ -479,6 +523,43 @@ package body Semantic_Versioning.Extended is
          end return;
       end Next_Token;
 
+      ----------------
+      -- Match_Token --
+      ----------------
+
+      procedure Match_Token (T : Tokens) is
+      begin
+         case T is
+            when Ampersand =>
+               if Is_Keyword ("and") then
+                  Match ("and");
+               else
+                  Match ('&');
+               end if;
+
+            when Pipe =>
+               if Is_Keyword ("or") then
+                  Match ("or");
+               else
+                  Match ('|');
+               end if;
+
+            when Negation =>
+               if Is_Keyword ("not") then
+                  Match ("not");
+               else
+                  Match ('!');
+               end if;
+
+            when Lparen =>
+               Match ('(');
+            when Rparen =>
+               Match (')');
+            when others =>
+               raise Program_Error;
+         end case;
+      end Match_Token;
+
       function Prod_EVS_Nested return Version_Set;
       function Prod_List (Head : Version_Set;
                           Kind : List_Kinds) return Version_Set;
@@ -496,7 +577,7 @@ package body Semantic_Versioning.Extended is
          Trace ("Prod EVS");
          case Next_Token is
             when Negation =>
-               Match ('!');
+               Match_Token (Negation);
                declare
                   Child : constant Version_Set := Prod_EVS (List_Kind, With_List => False);
                begin
@@ -543,10 +624,10 @@ package body Semantic_Versioning.Extended is
       function Prod_EVS_Nested return Version_Set is
       begin
          Trace ("Prod EVS Nested");
-         Match ('(');
+         Match_Token (Lparen);
          return VS : Version_Set := Prod_EVS (Any, With_List => True) do
             VS.Image := '(' & VS.Image & ')';
-            Match (')');
+            Match_Token (Rparen);
          end return;
       end Prod_EVS_Nested;
 
@@ -565,10 +646,10 @@ package body Semantic_Versioning.Extended is
          procedure Check_Mismatch is
          begin
             if I <= Str'Last then
-               if (Kind = Anded and then Str (I) = '|') or else
-                 (Kind = Ored and then Str (I) = '&')
+               if (Kind = Anded and then Next_Token = Pipe) or else
+                 (Kind = Ored and then Next_Token = Ampersand)
                then
-                  Error ("Cannot mix '&' and '|' operators, use parentheses");
+                  Error ("Cannot mix 'and' and 'or' operators, use parentheses");
                end if;
             end if;
          end Check_Mismatch;
@@ -589,12 +670,12 @@ package body Semantic_Versioning.Extended is
 
             when Anded =>
                Check_Mismatch;
-               Match ('&');
+               Match_Token (Ampersand);
                return New_Pair (Head, Prod_EVS (Anded, With_List => True), Anded);
 
             when Ored =>
                Check_Mismatch;
-               Match ('|');
+               Match_Token (Pipe);
                return New_Pair (Head, Prod_EVS (Ored, With_List => True), Ored);
          end case;
       end Prod_List;
