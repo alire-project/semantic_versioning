@@ -437,29 +437,32 @@ package body Semantic_Versioning.Extended is
       end Next_Basic_VS;
 
       ----------------
+      -- Is_Keyword --
+      ----------------
+
+      function Is_Keyword (Word : String) return Boolean is
+         Last : constant Integer := I + Word'Length - 1;
+      begin
+         if Last > Str'Last then
+            return False;
+         end if;
+
+         if ACH.To_Lower (Str (I .. Last)) /= Word then
+            return False;
+         end if;
+
+         if Last < Str'Last and then ACH.Is_Alphanumeric (Str (Last + 1)) then
+            return False;
+         end if;
+
+         return True;
+      end Is_Keyword;
+
+      ----------------
       -- Next_Token --
       ----------------
 
       function Next_Token (Skip_Whitespace : Boolean := True) return Tokens is
-
-         function Is_Keyword (Word : String) return Boolean is
-            Last : constant Integer := I + Word'Length - 1;
-         begin
-            if Last > Str'Last then
-               return False;
-            end if;
-
-            if ACH.To_Lower (Str (I .. Last)) /= Word then
-               return False;
-            end if;
-
-            if Last < Str'Last and then ACH.Is_Alphanumeric (Str (Last + 1)) then
-               return False;
-            end if;
-
-            return True;
-         end Is_Keyword;
-
          function Internal return Tokens is
          begin
             if I > Str'Last then
@@ -514,27 +517,21 @@ package body Semantic_Versioning.Extended is
       begin
          case T is
             when Ampersand =>
-               if I <= Str'Last and then ACH.To_Lower (Str (I .. Integer'Min (Str'Last, I + 2))) = "and"
-                 and then (I + 3 > Str'Last or else not ACH.Is_Alphanumeric (Str (I + 3)))
-               then
+               if Is_Keyword ("and") then
                   I := I + 3;
                else
                   Match ('&');
                end if;
 
             when Pipe =>
-               if I <= Str'Last and then ACH.To_Lower (Str (I .. Integer'Min (Str'Last, I + 1))) = "or"
-                 and then (I + 2 > Str'Last or else not ACH.Is_Alphanumeric (Str (I + 2)))
-               then
+               if Is_Keyword ("or") then
                   I := I + 2;
                else
                   Match ('|');
                end if;
 
             when Negation =>
-               if I <= Str'Last and then ACH.To_Lower (Str (I .. Integer'Min (Str'Last, I + 2))) = "not"
-                 and then (I + 3 > Str'Last or else not ACH.Is_Alphanumeric (Str (I + 3)))
-               then
+               if Is_Keyword ("not") then
                   I := I + 3;
                else
                   Match ('!');
@@ -564,7 +561,7 @@ package body Semantic_Versioning.Extended is
          Next : Version_Set;
       begin
          Trace ("Prod EVS");
-        case Next_Token is
+         case Next_Token is
             when Negation =>
                Match_Token (Negation);
                declare
