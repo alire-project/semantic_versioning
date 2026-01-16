@@ -441,6 +441,25 @@ package body Semantic_Versioning.Extended is
       ----------------
 
       function Next_Token (Skip_Whitespace : Boolean := True) return Tokens is
+
+         function Is_Keyword (Word : String) return Boolean is
+            Last : constant Integer := I + Word'Length - 1;
+         begin
+            if Last > Str'Last then
+               return False;
+            end if;
+
+            if ACH.To_Lower (Str (I .. Last)) /= Word then
+               return False;
+            end if;
+
+            if Last < Str'Last and then ACH.Is_Alphanumeric (Str (Last + 1)) then
+               return False;
+            end if;
+
+            return True;
+         end Is_Keyword;
+
          function Internal return Tokens is
          begin
             if I > Str'Last then
@@ -455,6 +474,14 @@ package body Semantic_Versioning.Extended is
 
             if I > Str'Last then
                return End_Of_Input;
+            end if;
+
+            if Is_Keyword ("and") then
+               return Ampersand;
+            elsif Is_Keyword ("or") then
+               return Pipe;
+            elsif Is_Keyword ("not") then
+               return Negation;
             end if;
 
             if Begins_With_Relational (Str (I .. Str'Last), Unicode) then
@@ -479,6 +506,49 @@ package body Semantic_Versioning.Extended is
          end return;
       end Next_Token;
 
+      ----------------
+      -- Match_Token --
+      ----------------
+
+      procedure Match_Token (T : Tokens) is
+      begin
+         case T is
+            when Ampersand =>
+               if I <= Str'Last and then ACH.To_Lower (Str (I .. Integer'Min (Str'Last, I + 2))) = "and"
+                 and then (I + 3 > Str'Last or else not ACH.Is_Alphanumeric (Str (I + 3)))
+               then
+                  I := I + 3;
+               else
+                  Match ('&');
+               end if;
+
+            when Pipe =>
+               if I <= Str'Last and then ACH.To_Lower (Str (I .. Integer'Min (Str'Last, I + 1))) = "or"
+                 and then (I + 2 > Str'Last or else not ACH.Is_Alphanumeric (Str (I + 2)))
+               then
+                  I := I + 2;
+               else
+                  Match ('|');
+               end if;
+
+            when Negation =>
+               if I <= Str'Last and then ACH.To_Lower (Str (I .. Integer'Min (Str'Last, I + 2))) = "not"
+                 and then (I + 3 > Str'Last or else not ACH.Is_Alphanumeric (Str (I + 3)))
+               then
+                  I := I + 3;
+               else
+                  Match ('!');
+               end if;
+
+            when Lparen =>
+               Match ('(');
+            when Rparen =>
+               Match (')');
+            when others =>
+               raise Program_Error;
+         end case;
+      end Match_Token;
+
       function Prod_EVS_Nested return Version_Set;
       function Prod_List (Head : Version_Set;
                           Kind : List_Kinds) return Version_Set;
@@ -494,9 +564,9 @@ package body Semantic_Versioning.Extended is
          Next : Version_Set;
       begin
          Trace ("Prod EVS");
-         case Next_Token is
+        case Next_Token is
             when Negation =>
-               Match ('!');
+               Match_Token (Negation);
                declare
                   Child : constant Version_Set := Prod_EVS (List_Kind, With_List => False);
                begin
@@ -543,10 +613,10 @@ package body Semantic_Versioning.Extended is
       function Prod_EVS_Nested return Version_Set is
       begin
          Trace ("Prod EVS Nested");
-         Match ('(');
+         Match_Token (Lparen);
          return VS : Version_Set := Prod_EVS (Any, With_List => True) do
             VS.Image := '(' & VS.Image & ')';
-            Match (')');
+            Match_Token (Rparen);
          end return;
       end Prod_EVS_Nested;
 
@@ -565,8 +635,8 @@ package body Semantic_Versioning.Extended is
          procedure Check_Mismatch is
          begin
             if I <= Str'Last then
-               if (Kind = Anded and then Str (I) = '|') or else
-                 (Kind = Ored and then Str (I) = '&')
+               if (Kind = Anded and then Next_Token = Pipe) or else
+                 (Kind = Ored and then Next_Token = Ampersand)
                then
                   Error ("Cannot mix '&' and '|' operators, use parentheses");
                end if;
@@ -589,12 +659,12 @@ package body Semantic_Versioning.Extended is
 
             when Anded =>
                Check_Mismatch;
-               Match ('&');
+               Match_Token (Ampersand);
                return New_Pair (Head, Prod_EVS (Anded, With_List => True), Anded);
 
             when Ored =>
                Check_Mismatch;
-               Match ('|');
+               Match_Token (Pipe);
                return New_Pair (Head, Prod_EVS (Ored, With_List => True), Ored);
          end case;
       end Prod_List;
