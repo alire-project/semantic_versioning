@@ -494,11 +494,24 @@ package body Semantic_Versioning.Extended is
                return End_Of_Input;
             end if;
 
+            --  Check for word operators
             if Is_Keyword ("and") then
+               if not Opts.Word_Operators then
+                  Error ("Word operator 'and' not allowed " &
+                         "(Word_Operators option is disabled)");
+               end if;
                return Ampersand;
             elsif Is_Keyword ("or") then
+               if not Opts.Word_Operators then
+                  Error ("Word operator 'or' not allowed " &
+                         "(Word_Operators option is disabled)");
+               end if;
                return Pipe;
             elsif Is_Keyword ("not") then
+               if not Opts.Word_Operators then
+                  Error ("Word operator 'not' not allowed " &
+                         "(Word_Operators option is disabled)");
+               end if;
                return Negation;
             end if;
 

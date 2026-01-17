@@ -88,7 +88,6 @@ begin
    --  Test Extended module with Options
    declare
       XVS1 : X.Version_Set;
-      XVS2 : X.Version_Set;
    begin
       --  Parse with Unicode
       XVS1 := X.Value (U ("≥1.2.0"), Opts => Unicode_Opts);
@@ -118,7 +117,8 @@ begin
 
    --  Test Parse function with Options
    declare
-      R : Basic.Result := Basic.Parse (U ("≥1.2.0 & ≤2.0.0"), Opts => Unicode_Opts);
+      R : constant Basic.Result :=
+         Basic.Parse (U ("≥1.2.0 & ≤2.0.0"), Opts => Unicode_Opts);
    begin
       Assert (R.Valid, "Parse with Unicode failed");
       Assert (Basic.Is_In (V ("1.5.0"), R.Set),
@@ -126,7 +126,8 @@ begin
    end;
 
    declare
-      R : Basic.Result := Basic.Parse (U ("≥1.2.0"), Opts => No_Unicode_Opts);
+      R : constant Basic.Result :=
+         Basic.Parse (U ("≥1.2.0"), Opts => No_Unicode_Opts);
    begin
       Assert (not R.Valid, "Parse should fail with Unicode when disabled");
    end;
@@ -142,6 +143,79 @@ begin
    exception
       when Malformed_Input =>
          null; -- Expected
+   end;
+
+   --  Test Word_Operators option with Extended module
+   --  Word operators should be rejected when the option is disabled
+   declare
+      With_Word_Ops : constant Basic.Options :=
+        (Unicode        => False,
+         Word_Operators => True,
+         Implicit_Equal => False);
+
+      No_Word_Ops : constant Basic.Options :=
+        (Unicode        => False,
+         Word_Operators => False,
+         Implicit_Equal => False);
+
+      XVS : X.Version_Set;
+   begin
+      --  Test parsing with word operators enabled (should accept "and", "or", "not")
+      XVS := X.Value ("1.0.0 and 1.0.0", Opts => With_Word_Ops);
+      Assert (X.Is_In (V ("1.0.0"), XVS), "Word 'and' parsing failed");
+
+      XVS := X.Value ("1.0.0 or 2.0.0", Opts => With_Word_Ops);
+      Assert (X.Is_In (V ("1.0.0"), XVS), "Word 'or' parsing failed");
+      Assert (X.Is_In (V ("2.0.0"), XVS), "Word 'or' parsing failed");
+
+      XVS := X.Value ("not 1.0.0", Opts => With_Word_Ops);
+      Assert (not X.Is_In (V ("1.0.0"), XVS), "Word 'not' parsing failed");
+      Assert (X.Is_In (V ("2.0.0"), XVS), "Word 'not' parsing failed");
+
+      --  Test that word operators are rejected when disabled
+      Assert (not X.Parse ("1.0.0 and 2.0.0", Opts => No_Word_Ops).Valid,
+              "Should reject 'and' when Word_Operators disabled");
+
+      Assert (not X.Parse ("1.0.0 or 2.0.0", Opts => No_Word_Ops).Valid,
+              "Should reject 'or' when Word_Operators disabled");
+
+      Assert (not X.Parse ("not 1.0.0", Opts => No_Word_Ops).Valid,
+              "Should reject 'not' when Word_Operators disabled");
+
+      --  Test that symbolic operators still work when word operators disabled
+      XVS := X.Value ("1.0.0 & 1.0.0", Opts => No_Word_Ops);
+      Assert (X.Is_In (V ("1.0.0"), XVS), "Symbolic '&' should work");
+
+      XVS := X.Value ("1.0.0 | 2.0.0", Opts => No_Word_Ops);
+      Assert (X.Is_In (V ("1.0.0"), XVS), "Symbolic '|' should work");
+
+      XVS := X.Value ("!1.0.0", Opts => No_Word_Ops);
+      Assert (not X.Is_In (V ("1.0.0"), XVS), "Symbolic '!' should work");
+
+      --  Test that symbolic operators work when word operators enabled
+      XVS := X.Value ("1.0.0 & 1.0.0", Opts => With_Word_Ops);
+      Assert (X.Is_In (V ("1.0.0"), XVS),
+              "Symbolic '&' should work even with Word_Operators enabled");
+   end;
+
+   --  Test combining all three options
+   declare
+      All_Opts : constant Basic.Options :=
+        (Unicode        => True,
+         Word_Operators => True,
+         Implicit_Equal => True);
+
+      XVS : X.Version_Set;
+   begin
+      --  Parse with Unicode and word operators
+      XVS := X.Value (U ("≥1.2.0 and ≤2.0.0"), Opts => All_Opts);
+      Assert (X.Is_In (V ("1.5.0"), XVS),
+              "Combined options parsing failed");
+
+      --  Check output with Implicit_Equal
+      XVS := X.Value ("=1.2.0");
+      Assert (X.Synthetic_Image (XVS, Opts => All_Opts) = "1.2.0",
+              "Combined options output failed");
    end;
 
 end Semver_Tests.Options;
