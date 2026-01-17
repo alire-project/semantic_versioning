@@ -2,6 +2,7 @@ pragma Warnings (GNAT, Off, "no entities of * are referenced");
 pragma Warnings (GNAT, Off, "use clause for * has no effect");
 
 with Ada.Assertions; use Ada.Assertions;
+with Ada.Strings.UTF_Encoding.Wide_Wide_Strings;
 
 with Semantic_Versioning.Basic;
 with Semantic_Versioning.Extended;
@@ -21,4 +22,12 @@ package Semver_Tests is
    use all type Extended.Version_Set;
    package B renames Basic;
    package X renames Extended;
+
+private
+
+   function U (S          : Wide_Wide_String;
+               Output_BOM : Boolean := False)
+               return Ada.Strings.UTF_Encoding.UTF_8_String
+               renames Ada.Strings.UTF_Encoding.Wide_Wide_Strings.Encode;
+
 end Semver_Tests;
