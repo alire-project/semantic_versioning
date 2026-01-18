@@ -24,7 +24,6 @@ procedure Semver_Tests.Options is
       Implicit_Equal => False);
 
    VS1 : Basic.Version_Set;
-   VS2 : Basic.Version_Set;
 
 begin
    --  Test parsing with Unicode operators enabled
