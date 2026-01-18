@@ -10,3 +10,4 @@ semantic_versioning = { path = '..' }
 
 [build-profiles]
 semantic_versioning = 'validation'
+semver_tests = 'validation'
