@@ -67,7 +67,9 @@ package Semantic_Versioning.Extended with Preelaborate is
    --  Options control parsing (Unicode for accepting Unicode operators)
 
    function Value_U (Str     : Wide_Wide_String;
-                     Relaxed : Boolean := False) return Version_Set;
+                     Relaxed : Boolean := False;
+                     Opts    : Basic.Options := Basic.Default_Options)
+                     return Version_Set;
 
    function Image (VS : Version_Set) return String;
    --  Original image, as given to Value

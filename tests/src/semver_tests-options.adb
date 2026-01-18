@@ -92,7 +92,7 @@ begin
       XVS1 := X.Value (U ("≥1.2.0"), Opts => Unicode_Opts);
       Assert (X.Is_In (V1_2, XVS1), "Extended Unicode parsing failed");
 
-      XVS1 := X.Value (U ("¬1.2.0"), Opts => Unicode_Opts);
+      XVS1 := X.Value_U ("¬1.2.0", Opts => Unicode_Opts);
       Assert (not X.Is_In (V1_2, XVS1), "Extended Unicode negation parsing failed");
 
       Assert (not X.Parse (U ("¬1.2.0"), Opts => No_Unicode_Opts).Valid,

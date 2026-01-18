@@ -17,5 +17,5 @@ begin
    --  Equivalent
 
    -- Alternate symbol
-   Assert (X.Is_In (V ("1.1"), X.Value ("¬1")));
+   Assert (X.Is_In (V ("1.1"), X.Value_U ("¬1")));
 end Semver_Tests.Negation;
