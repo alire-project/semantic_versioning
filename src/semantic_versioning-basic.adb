@@ -23,9 +23,9 @@ package body Semantic_Versioning.Basic is
    -- Image_Abbreviated --
    -----------------------
 
-   function Image_Abbreviated (VS             : Version_Set;
-                               Unicode        : Boolean := False;
-                               Implicit_Equal : Boolean := False) return String
+   function Image_Abbreviated (VS   : Version_Set;
+                               Opts : Options := Default_Options)
+                               return String
    is
 
       function Inner_Image (VS : Version_Set) return String is
@@ -34,7 +34,7 @@ package body Semantic_Versioning.Basic is
       begin
          Remain.Delete_First;
 
-         return Operator_Image (Cond, Unicode, Implicit_Equal) &
+         return Operator_Image (Cond, Opts) &
          (if VS.Length > Natural'(1)
           then " " & Separator & " " & Inner_Image (Remain)
           else "");
@@ -93,7 +93,7 @@ package body Semantic_Versioning.Basic is
 
    function Parse (S       : String;
                    Relaxed : Boolean := False;
-                   Unicode : Boolean := True) return Result
+                   Opts    : Options := Default_Options) return Result
    is
       use Ada.Strings;
       use Ada.Strings.Fixed;
@@ -122,7 +122,7 @@ package body Semantic_Versioning.Basic is
             Single_Set : constant Version_Set :=
                            To_Set (Trim (S (Prev .. Next - 1), Side => Both),
                                    Relaxed => Relaxed,
-                                   Unicode => Unicode);
+                                   Opts    => Opts);
          begin
             Prev := Next + 1;
             Next := Prev + 1;
@@ -173,7 +173,7 @@ package body Semantic_Versioning.Basic is
 
    function To_Set (S       : Version_String;
                     Relaxed : Boolean := False;
-                    Unicode : Boolean := True) return Version_Set is
+                    Opts    : Options := Default_Options) return Version_Set is
       subtype Numbers is Character range '0' .. '9';
 
       --  Convenience to remove the operator, whatever its length
@@ -207,15 +207,15 @@ package body Semantic_Versioning.Basic is
       --  Rest of cases
       if Begins_With (S, "/=") then
          return Except (Parse (Remainder (S, "/="), Relaxed));
-      elsif Unicode and then Begins_With (S, U ("≠")) then
+      elsif Opts.Unicode and then Begins_With (S, U ("≠")) then
          return Except (Parse (Remainder (S, U ("≠")), Relaxed));
       elsif Begins_With (S, ">=") then
          return At_Least (Parse (Remainder (S, ">="), Relaxed));
-      elsif Unicode and then Begins_With (S, U ("≥")) then
+      elsif Opts.Unicode and then Begins_With (S, U ("≥")) then
          return At_Least (Parse (Remainder (S, U ("≥")), Relaxed));
       elsif Begins_With (S, "<=") then
          return At_most (Parse (Remainder (S, "<="), Relaxed));
-      elsif Unicode and then Begins_With (S, U ("≤")) then
+      elsif Opts.Unicode and then Begins_With (S, U ("≤")) then
          return At_Most (Parse (Remainder (S, U ("≤")), Relaxed));
       elsif Begins_With (S, ">") then
          return More_Than (Parse (Remainder (S, ">"), Relaxed));
@@ -241,11 +241,11 @@ package body Semantic_Versioning.Basic is
 
    function Value (S       : String;
                    Relaxed : Boolean := False;
-                   Unicode : Boolean := True) return Version_Set
+                   Opts    : Options := Default_Options) return Version_Set
    is
       R : constant Result := Parse (S,
                                     Relaxed => Relaxed,
-                                    Unicode => Unicode);
+                                    Opts    => Opts);
    begin
       if R.Valid then
          return R.Set;
