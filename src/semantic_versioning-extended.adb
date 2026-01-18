@@ -524,7 +524,7 @@ package body Semantic_Versioning.Extended is
 
             if Begins_With (Str (I .. Str'Last), Not_UChar) then
                if not Opts.Unicode then
-                     Error (U ("Unicode operator '¬' not allowed " &
+                  Error (U ("Unicode operator '¬' not allowed " &
                             "(Unicode option is disabled)"));
                end if;
                return Negation;
