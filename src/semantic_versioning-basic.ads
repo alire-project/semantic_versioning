@@ -29,7 +29,7 @@ package Semantic_Versioning.Basic with Preelaborate is
       --  Accept/emit Unicode operators (e.g., ≠, ≥, ≤) instead of ASCII ones
 
       Word_Operators : Boolean := True;
-      --  Accept/emit word operators (and, or, not) instead of symbolic ones (&, |, ~)
+      --  Accept/emit word operators (and, or, not) instead of symbolic ones (&, |, !)
 
       Implicit_Equal : Boolean := True;
       --  Accept/emit implicit equal operator (i.e., no "=" before versions)
