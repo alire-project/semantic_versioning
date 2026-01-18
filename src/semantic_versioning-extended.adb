@@ -333,7 +333,8 @@ package body Semantic_Versioning.Extended is
                return List_Img;
 
             when Negated =>
-               return "!(" & Img (Trees.First_Child (Pos)) & ")";
+               return (if Opts.Unicode then U ("¬") else "!")
+                 & "(" & Img (Trees.First_Child (Pos)) & ")";
          end case;
       end Img;
 
@@ -525,7 +526,13 @@ package body Semantic_Versioning.Extended is
                when ')'                   => return Rparen;
                when '0' .. '9'            => return Number;
                when '|'                   => return Pipe;
-               when '!' | '¬'             => return Negation;
+               when '!'                   => return Negation;
+               when '¬'                   =>
+                  if not Opts.Unicode then
+                     Error ("Unicode operator '¬' not allowed " &
+                            "(Unicode option is disabled)");
+                  end if;
+                  return Negation;
                when '<' | '>' | '='
                         | '/' | '~' | '^' => return VS; -- already checked above, but...
                when others                => return Unknown;

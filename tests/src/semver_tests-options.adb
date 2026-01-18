@@ -92,6 +92,12 @@ begin
       XVS1 := X.Value (U ("≥1.2.0"), Opts => Unicode_Opts);
       Assert (X.Is_In (V1_2, XVS1), "Extended Unicode parsing failed");
 
+      XVS1 := X.Value (U ("¬1.2.0"), Opts => Unicode_Opts);
+      Assert (not X.Is_In (V1_2, XVS1), "Extended Unicode negation parsing failed");
+
+      Assert (not X.Parse (U ("¬1.2.0"), Opts => No_Unicode_Opts).Valid,
+              "Parse should fail for Unicode negation when disabled");
+
       --  Test Synthetic_Image with different options
       XVS1 := X.Value (">=1.2.0 & /=1.2.5");
       Assert (X.Synthetic_Image (XVS1, Opts => Unicode_Opts) =
@@ -102,6 +108,16 @@ begin
       Assert (X.Synthetic_Image (XVS1, Opts => No_Unicode_Opts) =
                 ">=1.2.0&/=1.2.5",
               "Extended ASCII output failed: " &
+                X.Synthetic_Image (XVS1, Opts => No_Unicode_Opts));
+
+      XVS1 := X.Value ("!1.2.0");
+      Assert (X.Synthetic_Image (XVS1, Opts => Unicode_Opts) =
+                U ("¬(=1.2.0)"),
+              "Extended Unicode negation output failed: " &
+                X.Synthetic_Image (XVS1, Opts => Unicode_Opts));
+      Assert (X.Synthetic_Image (XVS1, Opts => No_Unicode_Opts) =
+                "!(=1.2.0)",
+              "Extended ASCII negation output failed: " &
                 X.Synthetic_Image (XVS1, Opts => No_Unicode_Opts));
 
       --  Test Implicit_Equal with Extended
