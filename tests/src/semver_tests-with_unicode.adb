@@ -1,9 +1,9 @@
 procedure Semver_Tests.With_Unicode is
+
    Unicode_Opts : constant Basic.Options :=
      (Unicode        => True,
       Word_Operators => False,
       Implicit_Equal => False);
-
 
 begin
    Assert (X.Is_In (V ("1.1"), X.Value_U ("≠1")));
