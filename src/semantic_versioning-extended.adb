@@ -230,19 +230,19 @@ package body Semantic_Versioning.Extended is
                return Basic.Is_In (V, Node.VS);
 
             when Anded =>
-               return OK : Boolean := True do
+               return OK : Boolean do
                   Trace ("AND children count:" & Trees.Child_Count (Pos)'Img);
-                  for Child in VS.Set.Iterate_Children (Pos) loop
-                     OK := OK and then Is_In (Child);
-                  end loop;
+                  OK :=
+                    (for all Child in VS.Set.Iterate_Children (Pos) =>
+                       Is_In (Child));
                end return;
 
             when Ored =>
-               return OK : Boolean := False do
+               return OK : Boolean do
                   Trace ("OR children count:" & Trees.Child_Count (Pos)'Img);
-                  for Child in VS.Set.Iterate_Children (Pos) loop
-                     OK := OK or else Is_In (Child);
-                  end loop;
+                  OK :=
+                    (for some Child in VS.Set.Iterate_Children (Pos) =>
+                       Is_In (Child));
                end return;
 
             when Negated =>
