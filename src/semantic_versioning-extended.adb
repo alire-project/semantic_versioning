@@ -333,7 +333,8 @@ package body Semantic_Versioning.Extended is
                return List_Img;
 
             when Negated =>
-               return "!(" & Img (Trees.First_Child (Pos)) & ")";
+               return (if Opts.Unicode then U ("¬") else "!")
+                 & "(" & Img (Trees.First_Child (Pos)) & ")";
          end case;
       end Img;
 
@@ -377,6 +378,8 @@ package body Semantic_Versioning.Extended is
                       Unknown,
                       VS,
                       End_Of_Input);
+
+      Not_UChar : constant String := U ("¬");
 
       I   : Integer := Str'First; -- Next char to process
       Err : Unbounded_String;
@@ -519,6 +522,14 @@ package body Semantic_Versioning.Extended is
                return VS;
             end if;
 
+            if Begins_With (Str (I .. Str'Last), Not_UChar) then
+               if not Opts.Unicode then
+                  Error (U ("Unicode operator '¬' not allowed " &
+                            "(Unicode option is disabled)"));
+               end if;
+               return Negation;
+            end if;
+
             case Str (I) is
                when '&'                   => return Ampersand;
                when '('                   => return Lparen;
@@ -531,6 +542,7 @@ package body Semantic_Versioning.Extended is
                when others                => return Unknown;
             end case;
          end Internal;
+
       begin
          return T : constant Tokens := Internal do
             Trace ("Next token: " & T'Img);
@@ -561,6 +573,8 @@ package body Semantic_Versioning.Extended is
             when Negation =>
                if Is_Keyword ("not") then
                   Match ("not");
+               elsif Begins_With (Str (I .. Str'Last), Not_UChar) then
+                  Match (Not_UChar);
                else
                   Match ('!');
                end if;
@@ -760,7 +774,9 @@ package body Semantic_Versioning.Extended is
    -------------
 
    function Value_U (Str     : Wide_Wide_String;
-                     Relaxed : Boolean := False) return Version_Set
-   is (Value (U (Str), Relaxed));
+                     Relaxed : Boolean := False;
+                     Opts    : Basic.Options := Basic.Default_Options)
+                     return Version_Set
+   is (Value (U (Str), Relaxed, Opts));
 
 end Semantic_Versioning.Extended;

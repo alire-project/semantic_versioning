@@ -18,4 +18,4 @@ list_or     ::= ('|' | 'or') EVS_or
 EVS_and     ::= (EVS_Nested | VS) [and_list]
 EVS_or      ::= (EVS_Nested | VS) [or_list]
 OP          ::= '<' | '>' etc <comparison operators>
-NEG         ::= '!' | 'not'
+NEG         ::= '!' | '¬' | 'not'
