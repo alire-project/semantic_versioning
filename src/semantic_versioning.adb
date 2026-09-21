@@ -207,6 +207,55 @@ package body Semantic_Versioning is
       return V;
    end Parse;
 
+   ----------------
+   -- Is_Numeric --
+   ----------------
+   --  True if S is a non-empty string of ASCII digits, per Semver 2.0.0 §11.4
+   function Is_Numeric (S : String) return Boolean is
+     (S /= "" and then (for all C of S => C in '0' .. '9'));
+
+   type Field_Order is (Lower, Equal, Higher);
+
+   --------------------
+   -- Compare_Fields --
+   --------------------
+   --  Compares two dot-separated pre-release identifiers per Semver 2.0.0 §11.4:
+   --  numeric identifiers compare numerically (arbitrary precision, no overflow),
+   --  alphanumeric identifiers compare lexicographically (ASCII order), and a
+   --  numeric identifier always has lower precedence than an alphanumeric one.
+   function Compare_Fields (L, R : String) return Field_Order is
+   begin
+      if Is_Numeric (L) and then Is_Numeric (R) then
+         declare
+            --  Trim leading zeros (keeping at least one digit) so that
+            --  identifiers of arbitrary size compare correctly without
+            --  going through a bounded integer type.
+            function Trim_Zeros (S : String) return String is
+              (if S'Length > 1 and then S (S'First) = '0'
+               then Trim_Zeros (S (S'First + 1 .. S'Last))
+               else S);
+            L_Trim : constant String := Trim_Zeros (L);
+            R_Trim : constant String := Trim_Zeros (R);
+         begin
+            if L_Trim'Length /= R_Trim'Length then
+               return (if L_Trim'Length < R_Trim'Length then Lower else Higher);
+            elsif L_Trim = R_Trim then
+               return Equal;
+            else
+               return (if L_Trim < R_Trim then Lower else Higher);
+            end if;
+         end;
+      elsif Is_Numeric (L) then
+         return Lower;  -- Numeric identifiers are always lower than alphanumeric ones
+      elsif Is_Numeric (R) then
+         return Higher;
+      elsif L = R then
+         return Equal;
+      else
+         return (if L < R then Lower else Higher);
+      end if;
+   end Compare_Fields;
+
    ---------------------------
    -- Less_Than_Pre_Release --
    ---------------------------
@@ -219,7 +268,6 @@ package body Semantic_Versioning is
       Dot : constant Character_Set := To_Set (".");
       L_First, L_Last : Natural := L'First - 1;
       R_First, R_Last : Natural := R'First - 1;
-      L_Num, R_Num    : Integer;
    begin
       --  Special case if one of them is not really a pre-release:
       if L /= "" and then R = "" then
@@ -245,27 +293,11 @@ package body Semantic_Versioning is
          elsif L_Last = 0 then
             return True;  -- Since R is not exhausted but L is.
          else -- Field against field
-              -- Compare field numerically, if possible:
-            declare
-               L_Str : String renames L (L_First .. L_Last);
-               R_Str : String renames R (R_First .. R_Last);
-            begin
-               L_Num := Integer'Value (L_Str);
-               R_Num := Integer'Value (R_str);
-
-               if L_Num /= R_Num then
-                  return L_Num < R_Num;
-               else
-                  null; -- Try next fields
-               end if;
-            exception
-               when Constraint_Error => -- Can't convert, compare lexicographically
-                  if L_Str /= R_Str then
-                     return L_Str < R_Str;
-                  else
-                     null; -- Try next fields
-                  end if;
-            end;
+            case Compare_Fields (L (L_First .. L_Last), R (R_First .. R_Last)) is
+               when Lower  => return True;
+               when Higher => return False;
+               when Equal  => null; -- Try next fields
+            end case;
          end if;
       end loop;
    end Less_Than_Pre_Release;
