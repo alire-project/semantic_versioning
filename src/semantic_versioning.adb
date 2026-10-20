@@ -72,6 +72,53 @@ package body Semantic_Versioning is
       --  Semantic versioning forbids leading zeros in numbers, so they are
       --  only accepted in relaxed mode.
 
+      -----------------------
+      -- Check_Identifiers --
+      -----------------------
+
+      --  Semantic versioning identifiers in pre-release and build metadata
+      --  are non-empty, made of [0-9A-Za-z-], and numeric ones in the
+      --  pre-release cannot have leading zeros (in build metadata they can).
+
+      procedure Check_Identifiers (Part   : String;
+                                   Name   : String;
+                                   Is_Pre : Boolean)
+      is
+         First : Positive := Part'First;
+      begin
+         if Part = "" then
+            raise Malformed_Input with "Empty " & Name & ": " & Description;
+         end if;
+
+         for Pos in Part'First .. Part'Last + 1 loop
+            if Pos > Part'Last or else Part (Pos) = '.' then
+               declare
+                  Id : constant String := Part (First .. Pos - 1);
+               begin
+                  if Id = "" then
+                     raise Malformed_Input with
+                       "Empty identifier in " & Name & ": " & Description;
+                  elsif (for some C of Id =>
+                           C not in '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-')
+                  then
+                     raise Malformed_Input with
+                       "Invalid character in " & Name
+                       & ", only [0-9A-Za-z-] are allowed: " & Description;
+                  elsif Is_Pre
+                    and then (for all C of Id => C in '0' .. '9')
+                    and then Has_Leading_Zero (Id)
+                  then
+                     raise Malformed_Input with
+                       "Numeric pre-release identifier has leading zeros: "
+                       & Id;
+                  end if;
+               end;
+
+               First := Pos + 1;
+            end if;
+         end loop;
+      end Check_Identifiers;
+
       ----------------
       -- Eat_Number --
       ----------------
@@ -125,6 +172,15 @@ package body Semantic_Versioning is
 
       procedure Accept_Build is
       begin
+         --  In relaxed mode, the build metadata receives anything that does
+         --  not conform, so it is not checked.
+
+         if not Relaxed then
+            Check_Identifiers (Description (Next .. Description'Last),
+                               Name   => "build metadata",
+                               Is_Pre => False);
+         end if;
+
          V.Build := Ustrings.To_Unbounded_String (Description (Next .. Description'Last));
          Next    := Description'Last + 1;
       end Accept_Build;
@@ -146,30 +202,10 @@ package body Semantic_Versioning is
 
          V.Pre_Release := UStrings.To_Unbounded_String (Description (Next .. Last - 1));
 
-         --  Numeric identifiers in the pre-release cannot have leading zeros
-         --  either (build metadata identifiers can).
-
          if not Relaxed then
-            declare
-               First : Positive := Next;
-            begin
-               for Pos in Next .. Last loop
-                  if Pos = Last or else Description (Pos) = '.' then
-                     declare
-                        Id : constant String := Description (First .. Pos - 1);
-                     begin
-                        if (for all C of Id => C in '0' .. '9')
-                          and then Has_Leading_Zero (Id)
-                        then
-                           raise Malformed_Input with
-                             "Numeric pre-release identifier has leading zeros: "
-                             & Id;
-                        end if;
-                     end;
-                     First := Pos + 1;
-                  end if;
-               end loop;
-            end;
+            Check_Identifiers (Description (Next .. Last - 1),
+                               Name   => "pre-release",
+                               Is_Pre => True);
          end if;
 
          Next := Last;
@@ -258,6 +294,24 @@ package body Semantic_Versioning is
 
       return V;
    end Parse;
+
+   --------------------
+   -- Has_All_Points --
+   --------------------
+
+   function Has_All_Points (Description : Version_String) return Boolean is
+      Core_Last : Natural := Description'Last;
+   begin
+      for Pos in Description'Range loop
+         if Description (Pos) in '-' | '+' then
+            Core_Last := Pos - 1;
+            exit;
+         end if;
+      end loop;
+
+      return Ada.Strings.Fixed.Count
+        (Description (Description'First .. Core_Last), ".") = 2;
+   end Has_All_Points;
 
    ----------------
    -- Is_Numeric --
