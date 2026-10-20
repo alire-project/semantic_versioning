@@ -58,6 +58,12 @@ package Semantic_Versioning with Preelaborate is
    --  This parser will attempt to follow spec as much as possible.
    --  Anything not conforming will be shoved into the pre-release (if '-' separator) or build part (otherwise)
 
+   function Has_All_Points (Description : Version_String) return Boolean;
+   --  Whether major, minor and patch are all given in Description, as
+   --  semantic versioning requires (the parsers default missing ones to 0,
+   --  e.g. "1.0" is "1.0.0"). Says nothing else about the validity of
+   --  Description, which is up to the parsers.
+
    function Image (V : Version) return Version_String;
    --  Back to string representation
 
