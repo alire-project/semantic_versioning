@@ -49,13 +49,13 @@ package Semantic_Versioning.Basic with Preelaborate is
    --  E.g., "Within_Major ("1.0.0") and Except ("1.0.5")"
 
    function Image_Abbreviated (VS   : Version_Set;
-                               Opts : Options := Default_Options)
+                               Opts : Options := Output_Options)
                                return String;
    --  '&' separated; e.g. "^1.0.0 & ≠1.0.5"
    --  Options control output format (Unicode, Implicit_Equal)
 
    function Image (VS   : Version_Set;
-                   Opts : Options := Default_Options) return String
+                   Opts : Options := Output_Options) return String
                    renames Image_Abbreviated;
 
    function To_Set (S       : Version_String;

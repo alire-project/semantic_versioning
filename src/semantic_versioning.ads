@@ -16,8 +16,10 @@ package Semantic_Versioning with Preelaborate is
    --  * Strings that do not follow semantic versioning, in strict parsing
    --  * Unknown operators in string restrictions
 
-   type Point is range 0 .. 99_999_999;
-   --  Enough to store a YYYYMMDD as a point
+   type Point is range 0 .. 999_999_999_999_999_999;
+   --  Semantic versioning sets no limit on numbers. This is the largest value
+   --  made of all nines that fits in a Long_Long_Integer. Larger numbers in a
+   --  version string are reported as Malformed_Input.
 
    function Image (P : Point) return String;
 
@@ -49,7 +51,8 @@ package Semantic_Versioning with Preelaborate is
    function New_Version (Description : Version_String) return Version is (Parse (Description));
    function V           (Description : Version_String) return Version renames New_Version;
    function "+"         (Description : Version_String) return Version renames New_Version;
-   --  These are strict parsers that will fail on versions not respecting the semver spec
+   --  These are strict parsers that will fail on versions not respecting the semver spec,
+   --  e.g. with leading zeros in X.Y.Z or in numeric pre-release identifiers
 
    function Relaxed (Description : Version_String) return Version is (Parse (Description, Relaxed => True));
    --  This parser will attempt to follow spec as much as possible.

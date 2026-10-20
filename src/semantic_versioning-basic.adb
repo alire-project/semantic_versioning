@@ -24,7 +24,7 @@ package body Semantic_Versioning.Basic is
    -----------------------
 
    function Image_Abbreviated (VS   : Version_Set;
-                               Opts : Options := Default_Options)
+                               Opts : Options := Output_Options)
                                return String
    is
 
