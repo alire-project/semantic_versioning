@@ -22,8 +22,11 @@ jobs:
           - os: macos-15-intel      # x64
             id: x86_64-macos
 
-          - os: macos-latest        # arm64
+          - os: macos-15            # arm64
             id: aarch64-macos
+            # Not macos-latest: since runner image 20261013 its macOS 26 SDK
+            # lists arm64e.x1 in libSystem.tbd, which the GNAT linker rejects
+            # ("unknown architecture"). Revert when a fixed GNAT is available.
 
           - os: ubuntu-22.04        # x64, oldest supported so releases can run on older distros
             id: x86_64-linux

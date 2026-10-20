@@ -63,6 +63,15 @@ package body Semantic_Versioning is
                when '0' .. '9' => Number,
                when others     => Other));
 
+      ----------------------
+      -- Has_Leading_Zero --
+      ----------------------
+
+      function Has_Leading_Zero (Number : String) return Boolean
+      is (Number'Length > 1 and then Number (Number'First) = '0');
+      --  Semantic versioning forbids leading zeros in numbers, so they are
+      --  only accepted in relaxed mode.
+
       ----------------
       -- Eat_Number --
       ----------------
@@ -80,9 +89,25 @@ package body Semantic_Versioning is
             Last := Last + 1;
          end loop;
 
-         return Number : constant Point := Point'Value (Description (Next .. Last - 1)) do
-            Next := Last;
-         end return;
+         declare
+            Digits_Image : constant String := Description (Next .. Last - 1);
+         begin
+            if not Relaxed and then Has_Leading_Zero (Digits_Image) then
+               raise Malformed_Input with
+                 "Number has leading zeros: " & Digits_Image;
+            end if;
+
+            return Number : constant Point := Point'Value (Digits_Image) do
+               Next := Last;
+            end return;
+         exception
+            when Constraint_Error =>
+               --  Point'Value only fails for numbers out of range, as the
+               --  image is made only of digits.
+               raise Malformed_Input with
+                 "Number too large (maximum is " & Image (Point'Last) & "): "
+                 & Digits_Image;
+         end;
       end Eat_Number;
 
       --------------
@@ -120,6 +145,33 @@ package body Semantic_Versioning is
          end loop;
 
          V.Pre_Release := UStrings.To_Unbounded_String (Description (Next .. Last - 1));
+
+         --  Numeric identifiers in the pre-release cannot have leading zeros
+         --  either (build metadata identifiers can).
+
+         if not Relaxed then
+            declare
+               First : Positive := Next;
+            begin
+               for Pos in Next .. Last loop
+                  if Pos = Last or else Description (Pos) = '.' then
+                     declare
+                        Id : constant String := Description (First .. Pos - 1);
+                     begin
+                        if (for all C of Id => C in '0' .. '9')
+                          and then Has_Leading_Zero (Id)
+                        then
+                           raise Malformed_Input with
+                             "Numeric pre-release identifier has leading zeros: "
+                             & Id;
+                        end if;
+                     end;
+                     First := Pos + 1;
+                  end if;
+               end loop;
+            end;
+         end if;
+
          Next := Last;
 
          case Next_Token is
