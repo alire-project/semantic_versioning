@@ -18,6 +18,23 @@ Three types are provided:
 general subset expressed with combinations of AND (`&`) and OR (`|`) logical operators. As
 in Ada, both cannot be mixed at the same level but can be combined with parentheses, e.g., `"(≥7 & ≤9) | ≥2018"`.
 
+## Parsing
+
+Versions are parsed strictly by default (`Parse`, `New_Version`, `V`, `+`):
+anything not complying with the specification raises `Malformed_Input`, e.g.
+leading zeros or characters other than `[0-9A-Za-z-]` in pre-release and build
+identifiers.
+
+Relaxed parsing (`Relaxed`, or `Parse` with `Relaxed => True`) accepts
+versions as found in the wild, e.g. reported by package managers. Whatever
+does not conform goes into the pre-release or build metadata, which are then
+made compliant (`Compliant => True`, the default), so that the image of the
+result is accepted by strict parsing: other characters become `-`, empty
+identifiers are dropped, and numeric pre-release identifiers lose their
+leading zeros. For example, `3.8.13_2` gives `3.8.13+-2`. With
+`Compliant => False`, those parts keep the original text (`3.8.13+_2`), as
+before version 4.0.
+
 ## Limitations
 
 1. Wildcard version sets (`1.*`) are not yet supported, but for a single `*` which means "any version".
