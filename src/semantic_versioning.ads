@@ -45,8 +45,9 @@ package Semantic_Versioning with Preelaborate is
    -- Only the three numbers are mandatory.
 
    function Parse (Description : Version_String;
-                   Relaxed     : Boolean := False) return Version;
-   --  See Relaxed subprogram below for the meaning of Relaxed.
+                   Relaxed     : Boolean := False;
+                   Compliant   : Boolean := True) return Version;
+   --  See Relaxed subprogram below for the meaning of Relaxed and Compliant.
 
    function New_Version (Description : Version_String) return Version is (Parse (Description));
    function V           (Description : Version_String) return Version renames New_Version;
@@ -54,9 +55,18 @@ package Semantic_Versioning with Preelaborate is
    --  These are strict parsers that will fail on versions not respecting the semver spec,
    --  e.g. with leading zeros in X.Y.Z or in numeric pre-release identifiers
 
-   function Relaxed (Description : Version_String) return Version is (Parse (Description, Relaxed => True));
+   function Relaxed (Description : Version_String;
+                     Compliant   : Boolean := True) return Version
+   is (Parse (Description, Relaxed => True, Compliant => Compliant));
    --  This parser will attempt to follow spec as much as possible.
-   --  Anything not conforming will be shoved into the pre-release (if '-' separator) or build part (otherwise)
+   --  Anything not conforming will be shoved into the pre-release (if '-' separator) or build part (otherwise).
+   --  When Compliant, those parts are then made to comply with the spec, so
+   --  that the image of the result is always accepted by the strict parsers:
+   --  characters other than [0-9A-Za-z-] become '-', empty identifiers are
+   --  dropped, and numeric pre-release identifiers lose their leading zeros
+   --  (e.g. "3.8.13_2" gives "3.8.13+-2", and "1.0-01" gives "1.0.0-1").
+   --  Otherwise they keep the original text (e.g. "3.8.13+_2").
+   --  Compliant has no effect on strict parsing, which is always compliant.
 
    function Has_All_Points (Description : Version_String) return Boolean;
    --  Whether major, minor and patch are all given in Description, as

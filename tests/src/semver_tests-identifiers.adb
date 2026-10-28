@@ -5,7 +5,8 @@ procedure Semver_Tests.Identifiers is
    --  Strict parsing checks pre-release and build metadata identifiers as
    --  semantic versioning requires: non-empty, made of [0-9A-Za-z-], and
    --  without leading zeros in numeric pre-release identifiers. Relaxed
-   --  parsing does not.
+   --  parsing does not check them, but makes them compliant (see the
+   --  Compliant test).
 
    procedure Rejected (Text : String; Reason : String) is
    begin
@@ -53,5 +54,6 @@ begin
 
    --  Relaxed parsing keeps anything that does not conform as build metadata
 
-   Assert (Build (Parse ("1.0.0+a_b", Relaxed => True)) = "a_b");
+   Assert (Build (Parse ("1.0.0+a_b", Relaxed => True, Compliant => False))
+           = "a_b");
 end Semver_Tests.Identifiers;

@@ -26,12 +26,85 @@ package body Semantic_Versioning is
              Begins_With (S, U ("≥")) or else
              Begins_With (S, U ("≤")))));
 
+   ----------------
+   -- Is_Numeric --
+   ----------------
+   --  True if S is a non-empty string of ASCII digits, per Semver 2.0.0 §11.4
+   function Is_Numeric (S : String) return Boolean is
+     (S /= "" and then (for all C of S => C in '0' .. '9'));
+
+   ----------------------
+   -- Has_Leading_Zero --
+   ----------------------
+
+   function Has_Leading_Zero (Number : String) return Boolean
+   is (Number'Length > 1 and then Number (Number'First) = '0');
+   --  Semantic versioning forbids leading zeros in numbers, so they are
+   --  only accepted in relaxed mode.
+
+   ------------------------
+   -- Is_Identifier_Char --
+   ------------------------
+
+   function Is_Identifier_Char (C : Character) return Boolean
+   is (C in '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-');
+   --  Characters allowed in pre-release and build identifiers (§9, §10)
+
+   ---------------------------
+   -- Compliant_Identifiers --
+   ---------------------------
+
+   function Compliant_Identifiers (Part : String; Is_Pre : Boolean)
+                                   return String
+   --  Return Part, a pre-release or build metadata, complying with the spec
+   --  (see Check_Identifiers in Parse): other characters than identifier
+   --  ones become '-', empty identifiers are dropped and, in the
+   --  pre-release, numeric identifiers lose their leading zeros.
+   is
+      Result : UString;
+      First  : Positive := Part'First;
+   begin
+      for Pos in Part'First .. Part'Last + 1 loop
+         if Pos > Part'Last or else Part (Pos) = '.' then
+            declare
+               Id   : String := Part (First .. Pos - 1);
+               Keep : Positive := Id'First; -- First character kept
+            begin
+               for C of Id loop
+                  if not Is_Identifier_Char (C) then
+                     C := '-';
+                  end if;
+               end loop;
+
+               --  Leading zeros away, keeping a last digit ("00" is 0)
+               if Is_Pre and then Is_Numeric (Id) then
+                  while Has_Leading_Zero (Id (Keep .. Id'Last)) loop
+                     Keep := Keep + 1;
+                  end loop;
+               end if;
+
+               if Keep <= Id'Last then
+                  if UStrings.Length (Result) > 0 then
+                     UStrings.Append (Result, '.');
+                  end if;
+                  UStrings.Append (Result, Id (Keep .. Id'Last));
+               end if;
+            end;
+
+            First := Pos + 1;
+         end if;
+      end loop;
+
+      return UStrings.To_String (Result);
+   end Compliant_Identifiers;
+
    -----------
    -- Parse --
    -----------
 
    function Parse (Description : Version_String;
-                   Relaxed     : Boolean := False) return Version
+                   Relaxed     : Boolean := False;
+                   Compliant   : Boolean := True) return Version
    is
       Next : Positive := Description'First;
       V    : Version;
@@ -63,15 +136,6 @@ package body Semantic_Versioning is
                when '0' .. '9' => Number,
                when others     => Other));
 
-      ----------------------
-      -- Has_Leading_Zero --
-      ----------------------
-
-      function Has_Leading_Zero (Number : String) return Boolean
-      is (Number'Length > 1 and then Number (Number'First) = '0');
-      --  Semantic versioning forbids leading zeros in numbers, so they are
-      --  only accepted in relaxed mode.
-
       -----------------------
       -- Check_Identifiers --
       -----------------------
@@ -98,9 +162,7 @@ package body Semantic_Versioning is
                   if Id = "" then
                      raise Malformed_Input with
                        "Empty identifier in " & Name & ": " & Description;
-                  elsif (for some C of Id =>
-                           C not in '0' .. '9' | 'a' .. 'z' | 'A' .. 'Z' | '-')
-                  then
+                  elsif (for some C of Id => not Is_Identifier_Char (C)) then
                      raise Malformed_Input with
                        "Invalid character in " & Name
                        & ", only [0-9A-Za-z-] are allowed: " & Description;
@@ -292,6 +354,18 @@ package body Semantic_Versioning is
          when others => raise Malformed_Input with "Major number expected";
       end case;
 
+      --  Relaxed parsing put anything not conforming in the pre-release or
+      --  build, unchecked (strict parsing has checked them)
+
+      if Relaxed and then Compliant then
+         V.Pre_Release := UStrings.To_Unbounded_String
+           (Compliant_Identifiers (UStrings.To_String (V.Pre_Release),
+                                   Is_Pre => True));
+         V.Build := UStrings.To_Unbounded_String
+           (Compliant_Identifiers (UStrings.To_String (V.Build),
+                                   Is_Pre => False));
+      end if;
+
       return V;
    end Parse;
 
@@ -312,13 +386,6 @@ package body Semantic_Versioning is
       return Ada.Strings.Fixed.Count
         (Description (Description'First .. Core_Last), ".") = 2;
    end Has_All_Points;
-
-   ----------------
-   -- Is_Numeric --
-   ----------------
-   --  True if S is a non-empty string of ASCII digits, per Semver 2.0.0 §11.4
-   function Is_Numeric (S : String) return Boolean is
-     (S /= "" and then (for all C of S => C in '0' .. '9'));
 
    type Field_Order is (Lower, Equal, Higher);
 
